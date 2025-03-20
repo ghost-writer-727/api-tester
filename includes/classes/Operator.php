@@ -35,7 +35,11 @@ class Operator{
     public function set_args( $args = [] ){
         foreach( $args as $key => $value ){
             if( property_exists( $this, $key ) ){
-                $this->$key = $value;
+                if( $key == 'method' ){
+                    $this->$key = strtoupper( $value );
+                }else{
+                    $this->$key = $value;
+                }
             }
         }
     }
