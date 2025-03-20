@@ -53,15 +53,16 @@ class Settings{
         if (!current_user_can('manage_options')) {
             return;
         }
-        $this->presets = [ ['title' => 'Test 1', 'desc' => 'This is my description.'], ['title' => 'Test 2', 'desc' => 'This is my description.'], ['title' => 'Test 3', 'desc' => 'This is my description.'], ['title' => 'Test 4', 'desc' => 'This is my description.'], ['title' => 'Test 5', 'desc' => 'This is my description.'], ['title' => 'Test 6', 'desc' => 'This is my description.'], ['title' => 'Test 7', 'desc' => 'This is my description.'], ['title' => 'Test 8', 'desc' => 'This is my description.'], ['title' => 'Test 9', 'desc' => 'This is my description.'], ['title' => 'Test 10', 'desc' => 'This is my description.']];
+        $this->presets = [ ['title' => 'Test 1', 'desc' => 'This is my description.', 'id' => 'preset_1'], ['title' => 'Test 2', 'desc' => 'This is my description.', 'id' => 'preset_2'], ['title' => 'Test 3', 'desc' => 'This is my description.', 'id' => 'preset_3'], ['title' => 'Test 4', 'desc' => 'This is my description.', 'id' => 'preset_4'], ['title' => 'Test 5', 'desc' => 'This is my description.', 'id' => 'preset_5'], ['title' => 'Test 6', 'desc' => 'This is my description.', 'id' => 'preset_6'], ['title' => 'Test 7', 'desc' => 'This is my description.', 'id' => 'preset_7'], ['title' => 'Test 8', 'desc' => 'This is my description.', 'id' => 'preset_8'], ['title' => 'Test 9', 'desc' => 'This is my description.', 'id' => 'preset_9'], ['title' => 'Test 10', 'desc' => 'This is my description.', 'id' => 'preset_10']];
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
             <div class="api-tester">
                 <div class="api-presets">
                     <h2>Presets</h2>
-                    <?php foreach( $this->presets as $key => $preset ){
-                        echo '<input type="button" value="' . esc_attr($preset['title']) . '" class="button api-preset" data-key="' . esc_attr($key) . '"/>';
+                    <input type="button" value="New +" class="button api-preset" data-preset-id=""/>
+                    <?php foreach( $this->presets as $preset ){
+                        echo '<input type="button" value="' . esc_attr($preset['title']) . '" class="button api-preset" data-preset-id="' . esc_attr($preset['id']) . '"/>';
                     } ?>
                 </div>
                 <div class="api-settings">
@@ -107,7 +108,7 @@ class Settings{
         $reflection = new \ReflectionClass($operator);
         $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
         
-        $html = '<form class="api-tester-form">';
+        $html = '<form class="api-tester-form" data-preset-id="' . esc_attr($id) . '">';
         foreach ($properties as $property) {
             $name = $property->getName();
             $value = $property->getValue($operator);

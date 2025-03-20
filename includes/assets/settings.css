@@ -103,8 +103,12 @@
 .wp-core-ui .api-tester .button-secondary,
 .wp-core-ui .api-tester .api-preset {
     background: #696969;
+}    
+
+.wp-core-ui .api-tester .api-preset,
+.wp-core-ui .api-tester .api-preset.active {
+    margin-right: 0;   
 }
-    
 
 .wp-core-ui .api-tester .button:hover {
     transform: translateY(2px);
