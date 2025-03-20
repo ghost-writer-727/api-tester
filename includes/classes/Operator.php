@@ -25,11 +25,20 @@ class Operator{
     private $response;
     private $error;
 
-    public function __construct(){
+    public function __construct( $args = []){
         $this->user_agent = get_bloginfo( 'url' );
+        $this->set_args( $args );
     }
 
-    private function args(){
+    public function set_args( $args = [] ){
+        foreach( $args as $key => $value ){
+            if( property_exists( $this, $key ) ){
+                $this->$key = $value;
+            }
+        }
+    }
+
+    public function get_args(){
         $args = [];
         foreach( [ 
             'timeout', 
@@ -49,7 +58,7 @@ class Operator{
             'filename', 
             'limit_response_size' 
         ] as $arg ){
-            if( isset( $this->$arg ) && ! empty( $this->$arg ) ){
+            if( isset( $this->$arg ) ){
                 $args[$arg] = $this->$arg;
             }
         }
@@ -66,7 +75,7 @@ class Operator{
 
     public function request($method) {
         $url = $this->endpoint . $this->route;
-        $args = $this->args();
+        $args = $this->get_args();
         $args['method'] = strtoupper($method); // Ensure method is uppercase
 
         $this->response = wp_remote_request($url, $args);
@@ -81,7 +90,7 @@ class Operator{
                 'error' => $this->error,
                 'response' => null,
                 'status_code' => null,
-                'args' => $this->args()
+                'args' => $this->get_args()
             ];
         }
 
@@ -89,7 +98,7 @@ class Operator{
             'error' => null,
             'response' => wp_remote_retrieve_body($this->response), // Extract response body
             'status_code' => wp_remote_retrieve_response_code($this->response),
-            'args' => $this->args()
+            'args' => $this->get_args()
         ];
     }
 
