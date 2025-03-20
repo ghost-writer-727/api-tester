@@ -3,29 +3,29 @@ defined( 'ABSPATH' ) || exit;
 
 class Operator{
     public $endpoint;
-    public $method;
+    public $method = 'GET';
     public $route;
     public $timeout = 5;
     public $redirection = 5;
     public $httpversion = '1.0';
-    public $user_agent; // Defaults to get_bloginfo( 'url' )
+    public $user_agent; // Defaults to get_bloginfo( 'url' ) on construction
     public $reject_unsafe_urls = false;
     public $blocking = true;
-    public $headers;
-    public $cookies;
-    public $body;
+    public $headers = [];
+    public $cookies = [];
+    public $body = [];
     public $compress = false;
     public $decompress = true;
     public $sslverify = true;
     public $sslcertificates; // Absolute path to an SSL certificate file. Defaults to Wordpress defaults when empty.
     public $stream = false;
-    public $filename = null; // Filename of the file to save the streaed response.
-    public $limit_response_size = null; // Size in bytes to limit the response to.
+    public $filename; // Filename of the file to save the streaed response.
+    public $limit_response_size; // Size in bytes to limit the response to.
 
     private $response;
     private $error;
 
-    public function __construct( $args = []){
+    public function __construct( $args = [] ){
         $this->user_agent = get_bloginfo( 'url' );
         $this->set_args( $args );
     }
