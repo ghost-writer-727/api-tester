@@ -22,8 +22,8 @@ class Operator{
     public $filename = null; // Filename of the file to save the streaed response.
     public $limit_response_size = null; // Size in bytes to limit the response to.
 
-    public $response;
-    public $error;
+    private $response;
+    private $error;
 
     public function __construct(){
         $this->user_agent = get_bloginfo( 'url' );
@@ -91,5 +91,13 @@ class Operator{
             'status_code' => wp_remote_retrieve_response_code($this->response),
             'args' => $this->args()
         ];
+    }
+
+    public function get_response() {
+        return $this->response;
+    }
+
+    public function get_error() {
+        return $this->error;
     }
 }
