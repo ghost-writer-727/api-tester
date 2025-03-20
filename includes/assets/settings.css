@@ -1,3 +1,37 @@
+body{
+    background: #dbdbdb;
+}
+
+.api-tester-form .form-field {
+    display: flex;
+    align-items: flex-start;
+    margin: 1em 0;
+    gap: 1em;
+}
+
+.api-tester-form .form-field label {
+    flex: 0 0 125px;
+    padding-top: 5px;
+}
+
+.api-tester-form .form-field input[type="text"],
+.api-tester-form .form-field textarea {
+    flex: 1;
+    min-width: 300px;
+    max-width: 600px;
+    border-radius: 0;
+    border-style: none;
+}
+
+.api-tester-form .form-field input[type="checkbox"] {
+    margin-top: 8px;
+}
+
+.api-tester-form .form-field textarea {
+    font-family: monospace;
+    min-height: 100px;
+}
+
 .wp-core-ui .api-tester p .button {
     background: #006fd7;
     border-radius: 0;
