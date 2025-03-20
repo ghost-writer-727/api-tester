@@ -130,7 +130,7 @@ class Settings{
             
             $html .= '</p>';
         }
-        $html .= '<p><input type="button" value="Run Test" class="button button-primary api-tester-run"><input type="button" value="Save Preset" class="button button-secondary api-tester-save"></p>';
+        $html .= '<p class="api-tester-buttons"><input type="button" value="Run Test" class="button button-primary api-tester-run"><input type="button" value="Save Preset" class="button button-secondary api-tester-save"></p>';
         $html .= '</form>';
         
         return $html;
