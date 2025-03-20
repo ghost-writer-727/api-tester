@@ -116,8 +116,13 @@ class Settings{
             $value = $property->getValue($operator);
             $field_id = 'api_tester_' . $name;
             
+            // Get tooltip text based on field name
+            $tooltip = $this->get_field_tooltip($name);
             $html .= '<p class="form-field ' . esc_attr($field_id) . '_field">';
-            $html .= '<label for="' . esc_attr($field_id) . '">' . esc_html(ucfirst(str_replace('_', ' ', $name))) . '</label>';
+            $html .= '<label for="' . esc_attr($field_id) . '">' . 
+                     esc_html(ucfirst(str_replace('_', ' ', $name))) . 
+                     ($tooltip ? ' <span class="woocommerce-help-tip" data-tip="' . esc_attr($tooltip) . '"></span>' : '') . 
+                     '</label>';
             
             // Handle different types of values
             if ($name === 'method') {
@@ -234,6 +239,40 @@ class Settings{
         }
 
         wp_send_json_success($presets[$preset_id]);
+    }
+
+    /**
+     * Handle deleting a preset via AJAX
+     */
+    /**
+     * Get tooltip text for a field
+     * 
+     * @param string $field_name The name of the field
+     * @return string The tooltip text
+     */
+    private function get_field_tooltip($field_name) {
+        $tooltips = [
+            'url' => 'The target URL for the API request. Required field that must be a valid HTTP/HTTPS URL.',
+            'method' => 'HTTP method for the request. If not selected, defaults to GET.',
+            'httpversion' => 'HTTP protocol version to use. If not specified, defaults to HTTP/1.1.',
+            'timeout' => 'Number of seconds to wait for the request to complete. If left blank, defaults to 5 seconds.',
+            'redirection' => 'Number of redirects to follow. If left blank, defaults to 5 redirects.',
+            'headers' => 'HTTP headers to send with the request. If left blank, default WordPress headers will be used.',
+            'body' => 'Request body data. For POST/PUT requests, this will be sent as form data. If left blank, no body will be sent.',
+            'cookies' => 'Cookies to send with the request. If left blank, no cookies will be sent.',
+            'stream' => 'Whether to stream the response to a file rather than load it into memory. Useful for large responses.',
+            'filename' => 'When stream is enabled, this is the filename where the response will be saved. If left blank, a temporary filename will be generated.',
+            'limit_response_size' => 'Maximum size of the response in bytes. Use the slider to adjust. If unlimited is checked, no size limit will be applied.',
+            'decompress' => 'Whether to decompress gzipped responses. If unchecked, compressed responses will remain compressed.',
+            'sslverify' => 'Whether to verify SSL certificates. Disable only for testing with self-signed certificates.',
+            'sslcertificates' => 'Path to a custom SSL certificate file. If left blank, WordPress default certificates will be used.',
+            'user_agent' => 'Custom User-Agent string. If left blank, WordPress default will be used.',
+            'blocking' => 'Whether to wait for the response. If unchecked, request will be sent asynchronously.',
+            'reject_unsafe_urls' => 'Reject URLs that WordPress considers unsafe. Recommended to leave enabled for security.',
+            'preserve_header_case' => 'Preserve the case of HTTP header names. If unchecked, headers will be normalized to lowercase.',
+        ];
+
+        return $tooltips[$field_name] ?? '';
     }
 
     /**
