@@ -1,11 +1,7 @@
 <?php namespace API_Tester;
 defined( 'ABSPATH' ) || exit;
 
-class Settings{
-    const SLUG = 'api_tester';
-    const PAGE_TITLE = 'API Tester';
-    const MENU_TITLE = 'API Tester';
-    
+class Settings{ 
     private static $instance;
 
     /**
@@ -23,8 +19,8 @@ class Settings{
     }
 
     private function __construct(){
-        foreach( get_option( self::SLUG . '_preset_keys', [] ) as $key ){
-            if( $preset = get_option( self::SLUG . '_preset_' . $key, [] ) ){
+        foreach( get_option( Main::SLUG . '_preset_keys', [] ) as $key ){
+            if( $preset = get_option( Main::SLUG . '_preset_' . $key, [] ) ){
                 $this->presets[$key] = $preset;
             }
         }
@@ -38,10 +34,10 @@ class Settings{
      */
     public function register_admin_menu() {
         add_menu_page(
-            self::PAGE_TITLE,
-            self::MENU_TITLE,
+            Main::NAME,
+            Main::NAME,
             'manage_options',
-            self::SLUG,
+            Main::SLUG,
             [$this, 'render_settings_page'],
             'dashicons-rest-api',
             55
@@ -60,8 +56,8 @@ class Settings{
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
             <form method="post" action="options.php">
                 <?php
-                settings_fields(self::SLUG);
-                do_settings_sections(self::SLUG);
+                settings_fields(Main::SLUG);
+                do_settings_sections(Main::SLUG);
                 submit_button();
                 ?>
             </form>
