@@ -40,7 +40,7 @@ class Main{
     public function add_action_links($links) {
         $settings_link = sprintf(
             '<a href="%s">%s</a>',
-            admin_url('admin.php?page=' . Settings::SLUG),
+            admin_url('admin.php?page=' . Main::SLUG),
             __('Settings', 'api-tester')
         );
         array_unshift($links, $settings_link);
