@@ -11,6 +11,11 @@ require 'includes/classes/Operator.php';
 require 'includes/classes/Settings.php';
 
 class Main{
+    const SLUG = 'api_tester';
+    const NAME = 'API Tester';
+    const DIR = __DIR__;
+    const FILE = __FILE__;
+
     private static $instance;
 
     public static function get_instance(){
@@ -23,6 +28,10 @@ class Main{
     private function __construct(){
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), [$this, 'add_action_links']);
         Settings::get_instance();
+    }
+
+    public static function get_dir_url(){
+        return plugins_url( '', self::FILE );
     }
 
     /**
