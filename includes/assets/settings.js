@@ -2,6 +2,61 @@ jQuery(document).ready(function($){
     // Add placeholder for title input
     $('.api-tester-form .form-field input[id="api_tester_title"]').attr('placeholder', 'Enter a title');
 
+    // Handle stream checkbox to show/hide filename
+    $(document).on('change', '#api_tester_stream', function() {
+        const $field = $('.form-field.api_tester_filename_field');
+        if ($(this).prop('checked')) {
+            $field.css('display', 'flex');
+        } else {
+            $field.hide();
+        }
+    });
+
+    // Format response size slider value
+    function formatBytes(bytes) {
+        if (bytes >= 1073741824) return Math.round(bytes / 1073741824) + ' GB';
+        if (bytes >= 1048576) return Math.round(bytes / 1048576) + ' MB';
+        return bytes + ' bytes';
+    }
+
+    // Handle unlimited size checkbox
+    $(document).on('change', '.unlimited-size', function() {
+        const $slider = $('#api_tester_limit_response_size');
+        const $value = $slider.next('.range-value');
+        if ($(this).prop('checked')) {
+            $slider.prop('disabled', true);
+            $value.text('Unlimited');
+            $slider.val(null);
+        } else {
+            $slider.prop('disabled', false);
+            $slider.trigger('input');
+        }
+    });
+
+    // Update response size display
+    $(document).on('input', '#api_tester_limit_response_size', function() {
+        $(this).next('.range-value').text(formatBytes(Math.round(parseFloat($(this).val()))));
+    });
+
+    // Initialize response size display
+    $('#api_tester_limit_response_size').trigger('input');
+
+    // Update slider value when preset loads
+    $(document).on('preset:loaded', function() {
+        $('#api_tester_limit_response_size').trigger('input');
+    });
+
+    // Initialize filename visibility
+    const $field = $('.form-field.api_tester_filename_field');
+    if ($('#api_tester_stream').prop('checked')) {
+        $field.css('display', 'flex');
+    } else {
+        $field.hide();
+    }
+
+    // Initialize unlimited size checkbox
+    $('.unlimited-size').trigger('change');
+
     // Handle saving and updating presets
     $(document).on('click', '.api-tester-save', function(e) {
         e.preventDefault();
@@ -64,6 +119,46 @@ jQuery(document).ready(function($){
         });
     });
 
+    // Delete preset
+    $(document).on('click', '.api-tester-delete', function(e) {
+        e.preventDefault();
+        const $form = $('.api-tester-form');
+        const presetId = $form.attr('data-preset-id');
+
+        if (!presetId) {
+            alert('No preset selected');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete this preset?')) {
+            return;
+        }
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'delete_api_preset',
+                nonce: api_tester.nonce,
+                preset_id: presetId
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Remove preset from list and reset form
+                    $(`.api-preset[data-preset-id="${presetId}"]`).remove();
+                    $form.attr('data-preset-id', '');
+                    $('.api-tester-delete').hide();
+                    update_active_form_visuals();
+                } else {
+                    alert('Error deleting preset: ' + response.data);
+                }
+            },
+            error: function() {
+                alert('Error deleting preset');
+            }
+        });
+    });
+
     // Load preset when clicked
     $(document).on('click', '.api-preset', function(e) {
         e.preventDefault();
@@ -94,6 +189,15 @@ jQuery(document).ready(function($){
 
                         if ($input.attr('type') === 'checkbox') {
                             value = value === 'true' || value === true;
+                            // Update filename visibility if this is the stream checkbox
+                            if (key === 'stream') {
+                                const $field = $('.form-field.api_tester_filename_field');
+                                if (value) {
+                                    $field.css('display', 'flex');
+                                } else {
+                                    $field.hide();
+                                }
+                            }
                             $input.prop('checked', value);
                         } else if (typeof value === 'object') {
                             $input.val(JSON.stringify(value));
@@ -114,6 +218,10 @@ jQuery(document).ready(function($){
                     });
 
                     $form.attr('data-preset-id', presetId);
+                    // Update slider value display
+                    $('#api_tester_limit_response_size').trigger('input');
+                    // Show delete button and update visuals
+                    $('.api-tester-delete').show();
                     update_active_form_visuals(presetId);
                 } else {
                     alert('Error loading preset: ' + response.data);

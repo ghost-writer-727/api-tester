@@ -43,6 +43,8 @@
 }
 
 .api-tester-form .form-field input[type="text"],
+.api-tester-form .form-field input[type="number"],
+.api-tester-form .form-field select,
 .api-tester-form .form-field textarea,
 .api-tester-form .form-field .input-wrapper {
     flex: 1;
@@ -99,9 +101,70 @@
 .array-row .array-value {
     background: #eee;
     padding: 3px 15px;
-    border: none;
-    box-shadow: none;
+}
+
+/* Range slider styling */
+.response-size-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+input[type="range"] {
+    flex: 1;
     height: 30px;
+}
+
+.range-value {
+    min-width: 60px;
+    display: inline-block;
+    padding: 5px 10px;
+}
+
+.unlimited-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    padding-top: 0;
+}
+
+.api-tester-form .form-field .unlimited-label input[type="checkbox"] {
+    margin-top: 0;
+}
+
+/* Disabled slider styling */
+input[type="range"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Hide filename field when stream is unchecked */
+.form-field.api_tester_filename_field {
+    display: none;
+}
+
+/* Numeric input width */
+.numeric-input {
+    width: 150px !important;
+}
+
+/* Title styling */
+.api-tester-form .form-field input[id="api_tester_title"],
+.api-presets h2 {
+    text-align: center;
+    margin: 0 0 5px;
+    font-size: 1.3em;
+    color: #1d2327;
+    font-weight: 600;
+    padding: 0;
+    width: 100%;
+    background: #fff;
+}
+
+.api-tester-form .form-field input[id="api_tester_title"]::placeholder {
+    color: #1d232733;
 }
 
 .array-row .array-key {
@@ -124,9 +187,15 @@
     color: #dc3232;
 }
 
-.array-add {
+
+.array-row .array-remove .dashicons {
+    text-decoration: none;
+}
+
+.wp-core-ui .api-tester .button.array-add {
     align-self: flex-start;
     margin-top: 0.5em;
+    margin-bottom: 5px;
 }
 
 .api-tester-buttons {
@@ -165,4 +234,12 @@
 .wp-core-ui .api-tester .button.api-preset.active:hover{
     transform: translateY(0);
     cursor: default;
+}
+
+.wp-core-ui .api-tester .api-tester-buttons .button{
+    width: 20%;
+}
+
+.wp-core-ui .api-tester .button.api-tester-delete {
+    background: #bb4d6e;
 }
