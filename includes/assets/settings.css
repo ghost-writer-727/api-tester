@@ -1,0 +1,12 @@
+.wp-core-ui .api-tester p .button {
+    background: #006fd7;
+    border-radius: 0;
+    padding: .5em 2em;
+    border-style: none;
+    transition: transform 0.1s ease-in;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.wp-core-ui .api-tester p .button:hover {
+    transform: translateY(2px);
+}
