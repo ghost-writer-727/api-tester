@@ -21,14 +21,12 @@ class Settings{
 
     private function __construct(){
         $this->default_operator = new Operator();
-        foreach( get_option( Main::SLUG . '_preset_keys', [] ) as $key ){
-            if( $preset = get_option( Main::SLUG . '_preset_' . $key, [] ) ){
-                $this->presets[$key] = $preset;
-            }
-        }
+        $this->presets = get_option(Main::SLUG . '_presets', []);
         
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'admin_enqueue_scripts']);
+        add_action('wp_ajax_save_api_preset', [$this, 'handle_save_preset']);
+        add_action('wp_ajax_load_api_preset', [$this, 'handle_load_preset']);
     }
 
     /**
@@ -92,6 +90,9 @@ class Settings{
             filemtime($path . 'settings.js'), 
             true
         );
+        wp_localize_script('api-tester-admin', 'api_tester', [
+            'nonce' => wp_create_nonce('api_tester_nonce')
+        ]);
     }
 
     /**
@@ -146,5 +147,57 @@ class Settings{
         $html .= '</form>';
         
         return $html;
+    }
+
+    /**
+     * Handle saving a preset via AJAX
+     */
+    public function handle_save_preset() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        if (!check_ajax_referer('api_tester_nonce', 'nonce', false)) {
+            wp_send_json_error('Invalid nonce');
+        }
+
+        $preset = $_POST['preset'] ?? null;
+        if (!$preset || !isset($preset['id'])) {
+            wp_send_json_error('Invalid preset data');
+        }
+
+        // Get existing presets
+        $presets = get_option(Main::SLUG . '_presets', []);
+        $presets[$preset['id']] = $preset;
+
+        // Save all presets
+        update_option(Main::SLUG . '_presets', $presets);
+
+        wp_send_json_success();
+    }
+
+    /**
+     * Handle loading a preset via AJAX
+     */
+    public function handle_load_preset() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Insufficient permissions');
+        }
+
+        if (!check_ajax_referer('api_tester_nonce', 'nonce', false)) {
+            wp_send_json_error('Invalid nonce');
+        }
+
+        $preset_id = isset($_POST['preset_id']) ? sanitize_text_field($_POST['preset_id']) : '';
+        if (!$preset_id) {
+            wp_send_json_error('Invalid preset ID');
+        }
+
+        $presets = get_option(Main::SLUG . '_presets', []);
+        if (!isset($presets[$preset_id])) {
+            wp_send_json_error('Preset not found');
+        }
+
+        wp_send_json_success($presets[$preset_id]);
     }
 }
