@@ -2,6 +2,8 @@
 defined( 'ABSPATH' ) || exit;
 
 class Operator{
+    public $title;
+    public $description;
     public $endpoint;
     public $method = 'GET';
     public $route;
@@ -76,6 +78,11 @@ class Operator{
     public function request($method) {
         $url = $this->endpoint . $this->route;
         $args = $this->get_args();
+        
+        // Remove title and description from args as they aren't supported by wp_remote_request
+        if( isset( $args['title'] ) ) unset( $args['title'] );
+        if( isset( $args['description'] ) ) unset( $args['description'] );
+        
         $args['method'] = strtoupper($method); // Ensure method is uppercase
 
         $this->response = wp_remote_request($url, $args);
