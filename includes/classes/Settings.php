@@ -53,12 +53,21 @@ class Settings{
         if (!current_user_can('manage_options')) {
             return;
         }
+        $this->presets = [ ['title' => 'Test 1', 'desc' => 'This is my description.'], ['title' => 'Test 2', 'desc' => 'This is my description.'], ['title' => 'Test 3', 'desc' => 'This is my description.'], ['title' => 'Test 4', 'desc' => 'This is my description.'], ['title' => 'Test 5', 'desc' => 'This is my description.'], ['title' => 'Test 6', 'desc' => 'This is my description.'], ['title' => 'Test 7', 'desc' => 'This is my description.'], ['title' => 'Test 8', 'desc' => 'This is my description.'], ['title' => 'Test 9', 'desc' => 'This is my description.'], ['title' => 'Test 10', 'desc' => 'This is my description.']];
         ?>
-        <div class="wrap api-tester">
+        <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            <form class="api-tester-form">
-                <?php echo $this->get_settings(); ?>
-            </form>
+            <div class="api-tester">
+                <div class="api-presets">
+                    <h2>Presets</h2>
+                    <?php foreach( $this->presets as $key => $preset ){
+                        echo '<input type="button" value="' . esc_attr($preset['title']) . '" class="button api-preset" data-key="' . esc_attr($key) . '"/>';
+                    } ?>
+                </div>
+                <div class="api-settings">
+                    <?php echo $this->get_settings(); ?>
+                </div>
+            </div>
         </div>
         <?php
     }
@@ -98,7 +107,7 @@ class Settings{
         $reflection = new \ReflectionClass($operator);
         $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
         
-        $html = '';
+        $html = '<form class="api-tester-form">';
         foreach ($properties as $property) {
             $name = $property->getName();
             $value = $property->getValue($operator);
@@ -121,6 +130,8 @@ class Settings{
             
             $html .= '</p>';
         }
+        $html .= '<p><input type="button" value="Run Test" class="button button-primary api-tester-run"><input type="button" value="Save Preset" class="button button-secondary api-tester-save"></p>';
+        $html .= '</form>';
         
         return $html;
     }

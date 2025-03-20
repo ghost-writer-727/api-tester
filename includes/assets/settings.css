@@ -1,5 +1,25 @@
-body{
-    background: #dbdbdb;
+.api-tester {
+    padding: 2em;
+    background: #eee;
+    display: flex;
+    gap: 2em;
+    margin: 1em;
+}
+
+.api-presets {
+    flex: 0 0 250px;
+    background: white;
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.api-settings {
+    flex: 1;
+    background: white;
+    padding: 2em;
+    min-width: 0; /* Prevent flex item from overflowing */
 }
 
 .api-tester-form .form-field {
@@ -14,13 +34,43 @@ body{
     padding-top: 5px;
 }
 
+.api-tester-form .form-field input,
+.api-tester-form .form-field textarea {
+    background: #eee;
+    padding: 3px 15px;
+    border: none;
+    box-shadow: none;
+}
+
 .api-tester-form .form-field input[type="text"],
 .api-tester-form .form-field textarea {
     flex: 1;
-    min-width: 300px;
-    max-width: 600px;
+    min-width: 0;
+    width: 100%;
     border-radius: 0;
     border-style: none;
+}
+
+.api-tester-form .form-field.api_tester_title_field {
+    margin-top: 0;
+}
+
+.api-tester-form .form-field label[for="api_tester_title"]{
+    display: none;
+}
+
+.api-tester-form .form-field input[id="api_tester_title"],
+.api-presets h2{
+    text-align: center;
+    margin: 0 0 5px;
+    font-size: 1.3em;
+    color: #1d2327;
+    font-weight: 600;
+    padding: 0;
+}
+
+.api-tester-form .form-field input[id="api_tester_title"]::placeholder {
+    color: #1d232733;
 }
 
 .api-tester-form .form-field input[type="checkbox"] {
@@ -32,8 +82,17 @@ body{
     min-height: 100px;
 }
 
-.wp-core-ui .api-tester p .button {
-    background: #006fd7;
+.api-tester-buttons {
+    text-align: center;
+    margin-top: 2.5em;
+}
+
+.wp-core-ui .api-tester .button,
+.wp-core-ui .api-tester .button-primary,
+.wp-core-ui .api-tester .api-preset.active {
+    background: #00a386;
+    color: white;
+    margin-right: 15px;
     border-radius: 0;
     padding: .5em 2em;
     border-style: none;
@@ -41,6 +100,18 @@ body{
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.wp-core-ui .api-tester p .button:hover {
+.wp-core-ui .api-tester .button-secondary,
+.wp-core-ui .api-tester .api-preset {
+    background: #696969;
+}
+    
+
+.wp-core-ui .api-tester .button:hover {
     transform: translateY(2px);
+}
+
+
+.wp-core-ui .api-tester .button.api-preset.active:hover{
+    transform: translateY(0);
+    cursor: default;
 }
