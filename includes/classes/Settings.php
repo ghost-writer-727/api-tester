@@ -30,6 +30,7 @@ class Settings{
         }
         
         add_action('admin_menu', [$this, 'register_admin_menu']);
+        add_action('admin_enqueue_scripts', [$this, 'admin_enqueue_scripts']);
     }
 
     /**
@@ -55,7 +56,7 @@ class Settings{
             return;
         }
         ?>
-        <div class="wrap">
+        <div class="wrap api-tester">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
             <form method="post" action="options.php">
                 <?php
@@ -66,5 +67,26 @@ class Settings{
             </form>
         </div>
         <?php
+    }
+
+    /**
+     * Enqueue admin scripts
+     */
+    public function admin_enqueue_scripts() {
+        $path = Main::DIR . '/includes/assets/';
+        $url = Main::get_dir_url() . '/includes/assets/';
+        wp_enqueue_style(
+            'api-tester-admin', 
+            $url . 'settings.css',
+            [],
+            filemtime($path . 'settings.css')
+        );
+        wp_enqueue_script(
+            'api-tester-admin', 
+            $url . 'settings.js', 
+            ['jquery'], 
+            filemtime($path . 'settings.js'), 
+            true
+        );
     }
 }
