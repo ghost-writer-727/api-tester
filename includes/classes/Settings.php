@@ -3,6 +3,8 @@ defined( 'ABSPATH' ) || exit;
 
 class Settings{
     const SLUG = 'api_tester';
+    const PAGE_TITLE = 'API Tester';
+    const MENU_TITLE = 'API Tester';
     
     private static $instance;
 
@@ -26,7 +28,43 @@ class Settings{
                 $this->presets[$key] = $preset;
             }
         }
+        
+        add_action('admin_menu', [$this, 'register_admin_menu']);
     }
 
-}
+    /**
+     * Register the admin menu page
+     */
+    public function register_admin_menu() {
+        add_menu_page(
+            self::PAGE_TITLE,
+            self::MENU_TITLE,
+            'manage_options',
+            self::SLUG,
+            [$this, 'render_settings_page'],
+            'dashicons-rest-api',
+            55
+        );
+    }
 
+    /**
+     * Render the settings page content
+     */
+    public function render_settings_page() {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields(self::SLUG);
+                do_settings_sections(self::SLUG);
+                submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    }
+}
