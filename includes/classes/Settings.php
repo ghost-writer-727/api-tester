@@ -122,8 +122,19 @@ class Settings{
                 $html .= '<input type="checkbox" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="1"' . 
                         checked($value, true, false) . '>';
             } elseif (is_array($value)) {
-                $html .= '<textarea id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" rows="5" cols="50">' . 
-                        esc_textarea(json_encode($value, JSON_PRETTY_PRINT)) . '</textarea>';
+                $html .= '<span class="input-wrapper"><span class="array-inputs" data-field="' . esc_attr($name) . '">';
+                if (!empty($value)) {
+                    foreach ($value as $k => $v) {
+                        $html .= '<span class="array-row">';
+                        $html .= '<input type="text" class="array-key" value="' . esc_attr($k) . '" placeholder="Key">';
+                        $html .= '<input type="text" class="array-value" value="' . esc_attr($v) . '" placeholder="Value">';
+                        $html .= '<button type="button" class="button-link array-remove"><span class="dashicons dashicons-no-alt"></span></button>';
+                        $html .= '</span>';
+                    }
+                }
+                $html .= '<button type="button" class="button array-add">Add Item</button>';
+                $html .= '<input type="hidden" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '">';
+                $html .= '</span></span>';
             } else {
                 $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . 
                         esc_attr($value) . '">';

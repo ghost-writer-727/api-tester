@@ -43,7 +43,8 @@
 }
 
 .api-tester-form .form-field input[type="text"],
-.api-tester-form .form-field textarea {
+.api-tester-form .form-field textarea,
+.api-tester-form .form-field .input-wrapper {
     flex: 1;
     min-width: 0;
     width: 100%;
@@ -77,9 +78,55 @@
     margin-top: 8px;
 }
 
-.api-tester-form .form-field textarea {
-    font-family: monospace;
-    min-height: 100px;
+.input-wrapper {
+    display: flex;
+}
+
+.array-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    width: 100%;
+}
+
+.array-row {
+    display: flex;
+    gap: 0.5em;
+    align-items: center;
+}
+
+.array-row .array-key,
+.array-row .array-value {
+    background: #eee;
+    padding: 3px 15px;
+    border: none;
+    box-shadow: none;
+    height: 30px;
+}
+
+.array-row .array-key {
+    flex: 0 0 30%;
+}
+
+.array-row .array-value {
+    flex: 1;
+}
+
+.array-row .array-remove {
+    color: #dc3232;
+    padding: 0;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.array-row .array-remove:hover {
+    opacity: 1;
+    color: #dc3232;
+}
+
+.array-add {
+    align-self: flex-start;
+    margin-top: 0.5em;
 }
 
 .api-tester-buttons {
