@@ -3,6 +3,7 @@ defined( 'ABSPATH' ) || exit;
 
 class Settings{ 
     private static $instance;
+    private $default_operator;
 
     /**
      * Store a different set of settings as a separate option and load all sets of settings into one array
@@ -19,6 +20,7 @@ class Settings{
     }
 
     private function __construct(){
+        $this->default_operator = new Operator();
         foreach( get_option( Main::SLUG . '_preset_keys', [] ) as $key ){
             if( $preset = get_option( Main::SLUG . '_preset_' . $key, [] ) ){
                 $this->presets[$key] = $preset;
@@ -84,5 +86,47 @@ class Settings{
             filemtime($path . 'settings.js'), 
             true
         );
+    }
+
+    /**
+     * Generate HTML settings fields for Operator properties
+     * 
+     * @param string|null $id ID of the settings preset to load
+     * @return string HTML output
+     */
+    public function get_settings($id = null) {
+        // If no ID provided, use the default operator instance
+        $operator = $id === null ? $this->default_operator : new Operator();
+        
+        // Get reflection of operator class to get public properties
+        $reflection = new \ReflectionClass($operator);
+        $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
+        
+        $html = '';
+        
+        foreach ($properties as $property) {
+            $name = $property->getName();
+            $value = $property->getValue($operator);
+            $field_id = 'api_tester_' . $name;
+            
+            $html .= '<p class="form-field ' . esc_attr($field_id) . '_field">';
+            $html .= '<label for="' . esc_attr($field_id) . '">' . esc_html(ucfirst(str_replace('_', ' ', $name))) . '</label>';
+            
+            // Handle different types of values
+            if (is_bool($value)) {
+                $html .= '<input type="checkbox" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="1"' . 
+                        checked($value, true, false) . '>';
+            } elseif (is_array($value)) {
+                $html .= '<textarea id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" rows="5" cols="50">' . 
+                        esc_textarea(json_encode($value, JSON_PRETTY_PRINT)) . '</textarea>';
+            } else {
+                $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . 
+                        esc_attr($value) . '">';
+            }
+            
+            $html .= '</p>';
+        }
+        
+        return $html;
     }
 }
