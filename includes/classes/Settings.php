@@ -56,12 +56,8 @@ class Settings{
         ?>
         <div class="wrap api-tester">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-            <form method="post" action="options.php">
-                <?php
-                settings_fields(Main::SLUG);
-                do_settings_sections(Main::SLUG);
-                submit_button();
-                ?>
+            <form class="api-tester-form">
+                <?php echo $this->get_settings(); ?>
             </form>
         </div>
         <?php
@@ -103,7 +99,6 @@ class Settings{
         $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
         
         $html = '';
-        
         foreach ($properties as $property) {
             $name = $property->getName();
             $value = $property->getValue($operator);
