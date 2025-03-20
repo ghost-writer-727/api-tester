@@ -120,8 +120,8 @@ class Settings{
             
             // Handle different types of values
             if (is_bool($value)) {
-                $html .= '<input type="checkbox" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="1"' . 
-                        checked($value, true, false) . '>';
+                $html .= '<input type="checkbox" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '"' . 
+                        ($value ? ' checked="checked"' : '') . '>';
             } elseif (is_array($value)) {
                 $html .= '<span class="input-wrapper"><span class="array-inputs" data-field="' . esc_attr($name) . '">';
                 if (!empty($value)) {

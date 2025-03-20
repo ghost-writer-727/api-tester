@@ -16,7 +16,12 @@ jQuery(document).ready(function($){
             if (!name) return;
 
             if ($input.attr('type') === 'checkbox') {
-                formData[name] = $input.prop('checked');
+                // Only include checkbox if it's checked
+                if ($input.prop('checked')) {
+                    formData[name] = true;
+                } else {
+                    formData[name] = false;
+                }
             } else {
                 let value = $input.val();
                 // Try to parse JSON for array fields
@@ -88,6 +93,7 @@ jQuery(document).ready(function($){
                         if (!$input.length) return;
 
                         if ($input.attr('type') === 'checkbox') {
+                            value = value === 'true' || value === true;
                             $input.prop('checked', value);
                         } else if (typeof value === 'object') {
                             $input.val(JSON.stringify(value));
