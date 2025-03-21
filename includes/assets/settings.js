@@ -60,7 +60,7 @@ jQuery(document).ready(function($){
         updateArrayField($container);
     }
 
-    function populateArrayField($container, data) {
+/*    function populateArrayField($container, data) {
         resetArrayField($container);
         if (!data) return;
 
@@ -77,7 +77,7 @@ jQuery(document).ready(function($){
             console.error('Error parsing array field data:', e);
         }
     }
-
+*/
     $(document).on('click', '.array-add', function(e) {
         e.preventDefault();
         const $container = $(this).closest('.array-inputs');
@@ -186,10 +186,6 @@ jQuery(document).ready(function($){
         const presetId = currentPresetId || 'preset_' + Date.now();
         formData.append('preset_id', presetId);
         
-        // Ensure title is included in form data
-        const title = $('#api_tester_title').val() || 'Untitled Preset';
-        formData.append('api_tester_title', title);
-
         return formData;
     }
 
@@ -207,7 +203,7 @@ jQuery(document).ready(function($){
             success: function(response) {
                 if (response.success) {
                     const presetId = response.data.preset_id;
-                    const presetTitle = $('#api_tester_title').val() || 'Untitled Preset';
+                    const presetTitle = response.data.title;
                     
                     // Update preset buttons
                     const existingButton = $(`.api-preset[data-preset-id="${presetId}"]`);
@@ -225,6 +221,8 @@ jQuery(document).ready(function($){
                     
                     $deleteButton.show();
                     $form.attr('data-preset-id', presetId);
+                    $('#api_tester_title').val(presetTitle);
+                    $('#api_tester_allow_incrementing_title').val('0');
                     update_active_form_visuals(presetId);
                     setFormLoading(false);
                 } else {
@@ -243,19 +241,12 @@ jQuery(document).ready(function($){
     $duplicateButton.on('click', function(e) {
         e.preventDefault();
 
-        // Grab original id
-        const oldPresetId = $form.attr('data-preset-id');
-
-        // Add (copy) to unchanged titles
-        const oldPresetTitle = $('.api-preset[data-preset-id="' + oldPresetId + '"]').text();
-        const newTitle = $('#api_tester_title').val();
-        if( newTitle == oldPresetTitle ) {
-            $('#api_tester_title').val($('#api_tester_title').val() + ' (Copy)');
-        }
-
         // Generate a new preset ID
         const newPresetId = 'preset_' + Date.now();
         $form.attr('data-preset-id', newPresetId);
+
+        // Set allow_incrementing_title flag
+        $('#api_tester_allow_incrementing_title').val('1');
 
         // Save the new preset
         $saveButton.trigger('click');
@@ -343,6 +334,9 @@ jQuery(document).ready(function($){
         }
 
         setFormLoading(true, $(this));
+        update_form(presetId);
+        return;
+        
         $.ajax({
             url: ajaxurl,
             type: 'POST',
@@ -353,7 +347,8 @@ jQuery(document).ready(function($){
             },
             success: function(response) {
                 if (response.success) {
-                    const data = response.data;
+                    const data = api_tester.presets[presetId];
+
                     // Update form fields
                     // Reset form first
                     $form.find('input[type="checkbox"]').prop('checked', false);
@@ -454,4 +449,98 @@ jQuery(document).ready(function($){
             }
         });
     });
+
+    function update_form(presetId){
+        const data = api_tester.presets[presetId];
+        
+        // Update form fields
+        // Reset form first
+        $form.find('input[type="checkbox"]').prop('checked', false);
+        $form.find('input[type="range"]').each(function() {
+            $(this).val($(this).attr('min'));
+            $(this).trigger('input');
+        });
+
+        // Handle unlimited size first to ensure proper range state
+        const unlimitedValue = data['api_tester_unlimited_size'];
+        const $unlimitedCheckbox = $('.unlimited-size');
+        const isUnlimited = unlimitedValue === '1' || unlimitedValue === true || unlimitedValue === 'true' || unlimitedValue === 'on';
+        $unlimitedCheckbox.prop('checked', isUnlimited);
+        $unlimitedCheckbox.trigger('change');
+
+        // Now update with preset values
+        // First handle normal fields
+        Object.entries(data).forEach(([key, value]) => {
+            const $field = $form.find(`[name="${key}"]`);
+            if (!$field.length) return;
+
+            if ($field.is(':checkbox')) {
+                const isChecked = value === '1' || value === true || value === 'true' || value === 'on';
+                $field.prop('checked', isChecked);
+                $field.trigger('change');
+            } else if ($field.attr('type') === 'range') {
+                $field.val(value);
+                $field.trigger('input');
+                // Update the range value display
+                const $display = $field.next('.range-value');
+                if ($display.length) {
+                    if (key === 'api_tester_limit_response_size') {
+                        $display.text(formatBytes(value));
+                    } else {
+                        $display.text(value);
+                    }
+                }
+            } else {
+                $field.val(value);
+            }
+        });
+
+        // Then handle array fields
+        $('.array-inputs').each(function() {
+            const fieldName = $(this).data('field');
+            const key = 'api_tester_' + fieldName;
+            $(this).find('.array-row').remove();
+
+            if (data[fieldName]) {
+                try {
+                    let arrayData;
+                    if (typeof data[fieldName] === 'string') {
+                        // Handle potential double-encoded JSON
+                        try {
+                            arrayData = JSON.parse(data[fieldName]);
+                        } catch (e1) {
+                            try {
+                                arrayData = JSON.parse(data[fieldName].replace(/\\/g, ''));
+                            } catch (e2) {
+                                arrayData = {};
+                            }
+                        }
+                    } else {
+                        arrayData = data[fieldName];
+                    }
+
+                    if (arrayData && typeof arrayData === 'object') {
+                        Object.entries(arrayData).forEach(([k, v]) => {
+                            if (k && k.trim()) {
+                                const $row = createArrayRow();
+                                $row.find('.array-key').val(k.trim());
+                                $row.find('.array-value').val(v || '');
+                                $(this).find('.array-add').before($row);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error handling array data:', e);
+                }
+            }
+            updateArrayField($(this));
+        });
+
+        // Handle stream field last
+        $streamField.trigger('change');
+        $deleteButton.show();
+        $form.attr('data-preset-id', presetId);
+        update_active_form_visuals(presetId);
+        setFormLoading(false);        
+    }
 });

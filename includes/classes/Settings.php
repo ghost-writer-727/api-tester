@@ -4,6 +4,7 @@ defined( 'ABSPATH' ) || exit;
 class Settings{ 
     private static $instance;
     private $default_operator;
+    private $options_cache;
 
     /**
      * Store a different set of settings as a separate option and load all sets of settings into one array
@@ -52,7 +53,6 @@ class Settings{
         if (!current_user_can('manage_options')) {
             return;
         }
-        // $this->presets = [ ['title' => 'Test 1', 'desc' => 'This is my description.', 'id' => 'preset_1'], ['title' => 'Test 2', 'desc' => 'This is my description.', 'id' => 'preset_2'], ['title' => 'Test 3', 'desc' => 'This is my description.', 'id' => 'preset_3'], ['title' => 'Test 4', 'desc' => 'This is my description.', 'id' => 'preset_4'], ['title' => 'Test 5', 'desc' => 'This is my description.', 'id' => 'preset_5'], ['title' => 'Test 6', 'desc' => 'This is my description.', 'id' => 'preset_6'], ['title' => 'Test 7', 'desc' => 'This is my description.', 'id' => 'preset_7'], ['title' => 'Test 8', 'desc' => 'This is my description.', 'id' => 'preset_8'], ['title' => 'Test 9', 'desc' => 'This is my description.', 'id' => 'preset_9'], ['title' => 'Test 10', 'desc' => 'This is my description.', 'id' => 'preset_10']];
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
@@ -95,7 +95,8 @@ class Settings{
             true
         );
         wp_localize_script('api-tester-admin', 'api_tester', [
-            'nonce' => wp_create_nonce('api_tester_nonce')
+            'nonce' => wp_create_nonce('api_tester_nonce'),
+            'presets' => $this->presets
         ]);
     }
 
@@ -178,11 +179,10 @@ class Settings{
                         esc_attr($value) . '">';
             }
             
-
-            
             $html .= '</p>';
         }
-
+        
+        $html .= '<input type="hidden" id="api_tester_allow_incrementing_title" name="allow_incrementing_title" value="0">';
         $html .= '<p class="api-tester-buttons">';
         $html .= '<input type="button" value="Run Test" class="button button-primary api-tester-run">';
         $html .= '<input type="button" value="Create Preset" class="button button-secondary api-tester-save">';
@@ -206,17 +206,21 @@ class Settings{
             wp_send_json_error(['message' => 'Invalid nonce']);
         }
 
-        // Get existing presets
-        $presets = get_option(Main::SLUG . '_presets', []);
-        
         // Get the preset data from POST
         $preset_id = isset($_POST['preset_id']) ? sanitize_text_field($_POST['preset_id']) : '';
         if (!$preset_id) {
-            wp_send_json_error(['message' => 'Preset ID is required']);
+            wp_send_json_error(['message' => 'JS Error: Preset ID missing']);
         }
 
-        // Get the title from the form data
-        $title = isset($_POST['api_tester_title']) ? sanitize_text_field($_POST['api_tester_title']) : 'Untitled';
+        if (!isset($_POST['title'])) {
+            wp_send_json_error(['message' => 'Title is required']);
+        }
+
+        $allow_duplicates = isset($_POST['allow_incrementing_title']) && $_POST['allow_incrementing_title'] === '1';
+        $title = $this->validate_title($_POST['title'], $allow_duplicates);
+        if( !$title ) {
+            wp_send_json_error(['message' => 'Title already exists']);
+        }
         
         // Save the preset with title
         $preset_data = $_POST;
@@ -243,9 +247,8 @@ class Settings{
                                         $preset_data[$field] === 'on' || $preset_data[$field] === 1) ? '1' : '0';
         }
 
-        error_log('Saving preset data: ' . print_r($preset_data, true));
-        $presets[$preset_id] = $preset_data;
-        update_option(Main::SLUG . '_presets', $presets);
+        $this->presets[$preset_id] = $preset_data;
+        update_option(Main::SLUG . '_presets', $this->presets);
 
         wp_send_json_success([
             'preset_id' => $preset_id,
@@ -270,12 +273,11 @@ class Settings{
             wp_send_json_error('Invalid preset ID');
         }
 
-        $presets = get_option(Main::SLUG . '_presets', []);
-        if (!isset($presets[$preset_id])) {
+        if (!isset($this->presets[$preset_id])) {
             wp_send_json_error('Preset not found');
         }
-error_log( print_r( $presets[$preset_id], true ) );
-        wp_send_json_success($presets[$preset_id]);
+
+        wp_send_json_success($this->presets[$preset_id]);
     }
 
     /**
@@ -329,16 +331,53 @@ error_log( print_r( $presets[$preset_id], true ) );
             wp_send_json_error('Invalid preset ID');
         }
 
-        // Get existing presets
-        $presets = get_option(Main::SLUG . '_presets', []);
-        
         // Remove the preset if it exists
-        if (isset($presets[$preset_id])) {
-            unset($presets[$preset_id]);
-            update_option(Main::SLUG . '_presets', $presets);
+        if (isset($this->presets[$preset_id])) {
+            unset($this->presets[$preset_id]);
+            update_option(Main::SLUG . '_presets', $this->presets);
             wp_send_json_success();
         } else {
             wp_send_json_error('Preset not found');
         }
     }
+
+    private function validate_title($title, $allow_duplicates = false) {
+        $title = sanitize_text_field($title);
+
+        if( $this->title_exists($title) ){
+            $title = $allow_duplicates ? $this->increment_title_number($title) : false;
+        }
+        
+        return $title;
+    }
+
+    private function increment_title_number($title) {
+        $old_title = $title;
+        
+        // Check if the string ends in (Copy 1), (Copy 2), etc.
+        if( preg_match('/\(Copy\s*(\d+)\)$/', $title, $matches) ) {
+            // If so then increment the number
+            $number = $matches[1];
+
+            // get the length of "(Copy " to "{x})"
+            $length = strlen(" (Copy ") + strlen($number) + strlen(")");
+            $title = substr($title, 0, -$length);
+            $title .= ' (Copy ' . ($number + 1) . ')';
+        } else {
+            $title .= ' (Copy 1)';
+        }
+
+        if( $this->title_exists($title) ){
+            $title = $this->increment_title_number($title);
+        }
+
+        return $title;
+    }
+
+    private function title_exists($title) {
+        return in_array($title, array_map(function($preset) {
+            return $preset['title'];
+        }, $this->presets));
+    }
+
 }
