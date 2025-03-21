@@ -15,6 +15,28 @@
     gap: 1em;
 }
 
+.api-tester-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.api-preset {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.api-preset.active {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
 .api-settings {
     flex: 1;
     background: white;
@@ -198,6 +220,19 @@ input[type="range"]:disabled {
     margin-bottom: 5px;
 }
 
+.preset-name-field {
+    margin: 15px 0;
+}
+
+.preset-name-field label {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.preset-name-field input {
+    width: 200px;
+}
+
 .api-tester-buttons {
     text-align: center;
     margin-top: 2.5em;
@@ -238,6 +273,51 @@ input[type="range"]:disabled {
 
 .wp-core-ui .api-tester .api-tester-buttons .button{
     width: 20%;
+}
+
+/* Loading overlay */
+.api-tester-form-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: none;
+    z-index: 100;
+}
+
+.api-tester-form-overlay.active {
+    display: block;
+}
+
+/* Loading spinner */
+.button-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.button-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    border-top-color: transparent;
+    animation: button-loading-spinner 0.6s linear infinite;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
 }
 
 .wp-core-ui .api-tester .button.api-tester-delete {

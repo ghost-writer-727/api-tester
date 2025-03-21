@@ -59,10 +59,13 @@ class Settings{
             <div class="api-tester">
                 <div class="api-presets">
                     <h2>Presets</h2>
-                    <input type="button" value="New +" class="button api-preset" data-preset-id=""/>
-                    <?php foreach( $this->presets as $preset ){
-                        echo '<input type="button" value="' . esc_attr($preset['title']) . '" class="button api-preset" data-preset-id="' . esc_attr($preset['id']) . '"/>';
-                    } ?>
+                    <div class="api-tester-presets">
+                        <button type="button" class="button button-secondary api-preset" data-preset-id="">New +</button>
+                        <?php foreach( $this->presets as $preset_id => $preset ) {
+                            $title = isset($preset['title']) ? $preset['title'] : 'Untitled Preset';
+                            echo '<button type="button" class="button button-secondary api-preset" data-preset-id="' . esc_attr($preset_id) . '">' . esc_html($title) . '</button>';
+                        } ?>
+                    </div>
                 </div>
                 <div class="api-settings">
                     <?php echo $this->get_settings(); ?>
@@ -145,7 +148,7 @@ class Settings{
                     . 'min="' . $min . '" max="' . $max . '" step="1048576" value="' . (int)$value . '"' .
                     ($value === null ? ' disabled' : '') . '>';
                 $html .= '<span class="range-value"></span>';
-                $html .= '<label class="unlimited-label"><input type="checkbox" class="unlimited-size"' . 
+                $html .= '<label class="unlimited-label"><input type="checkbox" name="api_tester_unlimited_size" class="unlimited-size"' . 
                     ($value === null ? ' checked' : '') . '>Unlimited</label>';
                 $html .= '</span>';
             } elseif ($name === 'filename') {
@@ -179,6 +182,7 @@ class Settings{
             
             $html .= '</p>';
         }
+
         $html .= '<p class="api-tester-buttons">';
         $html .= '<input type="button" value="Run Test" class="button button-primary api-tester-run">';
         $html .= '<input type="button" value="Save Preset" class="button button-secondary api-tester-save">';
@@ -194,26 +198,58 @@ class Settings{
      */
     public function handle_save_preset() {
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Insufficient permissions');
+            wp_send_json_error(['message' => 'Insufficient permissions']);
         }
 
-        if (!check_ajax_referer('api_tester_nonce', 'nonce', false)) {
-            wp_send_json_error('Invalid nonce');
-        }
-
-        $preset = $_POST['preset'] ?? null;
-        if (!$preset || !isset($preset['id'])) {
-            wp_send_json_error('Invalid preset data');
+        if (!check_ajax_referer('api_tester_nonce', '_ajax_nonce', false)) {
+            wp_send_json_error(['message' => 'Invalid nonce']);
         }
 
         // Get existing presets
         $presets = get_option(Main::SLUG . '_presets', []);
-        $presets[$preset['id']] = $preset;
+        
+        // Get the preset data from POST
+        $preset_id = isset($_POST['preset_id']) ? sanitize_text_field($_POST['preset_id']) : '';
+        if (!$preset_id) {
+            wp_send_json_error(['message' => 'Preset ID is required']);
+        }
 
-        // Save all presets
+        // Get the title from the form data
+        $title = isset($_POST['api_tester_title']) ? sanitize_text_field($_POST['api_tester_title']) : 'Untitled';
+        
+        // Save the preset with title
+        $preset_data = $_POST;
+        $preset_data['title'] = $title;
+
+        // Handle array fields (headers, cookies, body)
+        $array_fields = ['headers', 'cookies', 'body'];
+        foreach ($array_fields as $field) {
+            if (isset($preset_data[$field])) {
+                $array_data = json_decode(stripslashes($preset_data[$field]), true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $preset_data[$field] = $array_data;
+                } else {
+                    $preset_data[$field] = [];
+                }
+            }
+        }
+
+        // Ensure checkbox fields are properly saved as boolean values
+        $checkbox_fields = ['stream', 'decompress', 'sslverify', 'blocking', 'reject_unsafe_urls', 'preserve_header_case'];
+        foreach ($checkbox_fields as $field) {
+            $preset_data[$field] = isset($preset_data[$field]) && 
+                                       ($preset_data[$field] === '1' || $preset_data[$field] === 'true' || 
+                                        $preset_data[$field] === 'on' || $preset_data[$field] === 1) ? '1' : '0';
+        }
+
+        error_log('Saving preset data: ' . print_r($preset_data, true));
+        $presets[$preset_id] = $preset_data;
         update_option(Main::SLUG . '_presets', $presets);
 
-        wp_send_json_success();
+        wp_send_json_success([
+            'preset_id' => $preset_id,
+            'title' => $title
+        ]);
     }
 
     /**
@@ -237,7 +273,7 @@ class Settings{
         if (!isset($presets[$preset_id])) {
             wp_send_json_error('Preset not found');
         }
-
+error_log( print_r( $presets[$preset_id], true ) );
         wp_send_json_success($presets[$preset_id]);
     }
 
