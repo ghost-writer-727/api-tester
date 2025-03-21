@@ -320,6 +320,10 @@ input[type="range"]:disabled {
     }
 }
 
+.wp-core-ui .api-tester .button.api-tester-duplicate {
+    background: #4d5abb;
+}
+
 .wp-core-ui .api-tester .button.api-tester-delete {
     background: #bb4d6e;
 }

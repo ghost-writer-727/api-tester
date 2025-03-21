@@ -108,6 +108,7 @@ jQuery(document).ready(function($){
     // Initialize form elements
     const $form = $('.api-tester-form');
     const $saveButton = $('.api-tester-save');
+    const $duplicateButton = $('.api-tester-duplicate');
     const $deleteButton = $('.api-tester-delete');
     const $streamField = $('#api_tester_stream');
     const $filenameField = $('.form-field.api_tester_filename_field');
@@ -168,12 +169,10 @@ jQuery(document).ready(function($){
     // Initialize unlimited size checkbox
     $('.unlimited-size').trigger('change');
 
-    // Handle preset saving
-    $saveButton.on('click', function(e) {
-        e.preventDefault();
-
+    // Package the form data
+    function packageFormData( action ){
         const formData = new FormData($form[0]);
-        formData.append('action', 'save_api_preset');
+        formData.append('action', action);
         formData.append('_ajax_nonce', api_tester.nonce);
         
         // Explicitly handle checkbox states
@@ -191,11 +190,18 @@ jQuery(document).ready(function($){
         const title = $('#api_tester_title').val() || 'Untitled Preset';
         formData.append('api_tester_title', title);
 
+        return formData;
+    }
+
+    // Handle preset saving
+    $saveButton.on('click', function(e) {
+        e.preventDefault();
+
         setFormLoading(true, $(this));
         $.ajax({
             url: ajaxurl,
             type: 'POST',
-            data: formData,
+            data: packageFormData( 'save_api_preset' ),
             processData: false,
             contentType: false,
             success: function(response) {
@@ -231,6 +237,28 @@ jQuery(document).ready(function($){
                 setFormLoading(false);
             }
         });
+    });
+
+    // Handle preset duplication
+    $duplicateButton.on('click', function(e) {
+        e.preventDefault();
+
+        // Grab original id
+        const oldPresetId = $form.attr('data-preset-id');
+
+        // Add (copy) to unchanged titles
+        const oldPresetTitle = $('.api-preset[data-preset-id="' + oldPresetId + '"]').text();
+        const newTitle = $('#api_tester_title').val();
+        if( newTitle == oldPresetTitle ) {
+            $('#api_tester_title').val($('#api_tester_title').val() + ' (Copy)');
+        }
+
+        // Generate a new preset ID
+        const newPresetId = 'preset_' + Date.now();
+        $form.attr('data-preset-id', newPresetId);
+
+        // Save the new preset
+        $saveButton.trigger('click');
     });
 
     // Handle preset deletion
@@ -282,9 +310,13 @@ jQuery(document).ready(function($){
         $('.api-preset[data-preset-id="' + presetId + '"]').addClass('active');
 
         if(presetId) {
-            $('.api-tester-form[data-preset-id="' + presetId + '"] .api-tester-save').val('Update Preset');
+            $saveButton.val('Update Preset');
+            $duplicateButton.show();
+            $deleteButton.show();
         } else {
-            $('.api-tester-form .api-tester-save').val('Create Preset');
+            $saveButton.val('Create Preset');
+            $duplicateButton.hide();
+            $deleteButton.hide();
         }
     }
     update_active_form_visuals();

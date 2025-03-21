@@ -186,6 +186,7 @@ class Settings{
         $html .= '<p class="api-tester-buttons">';
         $html .= '<input type="button" value="Run Test" class="button button-primary api-tester-run">';
         $html .= '<input type="button" value="Create Preset" class="button button-secondary api-tester-save">';
+        $html .= '<input type="button" value="Create New From This" class="button button-secondary api-tester-duplicate" style="display:none;">';
         $html .= '<input type="button" value="Delete Preset" class="button button-secondary api-tester-delete" style="display:none;">';
         $html .= '</p>';
         $html .= '</form>';
