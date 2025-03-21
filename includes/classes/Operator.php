@@ -20,7 +20,7 @@ class Operator{
     ];
     public $cookies = [];
     public $body = [];
-    public $body_format = 'json'; // 'json','array', 'string';
+    public $body_format = 'json'; // 'json','array'
     public $compress = false;
     public $decompress = true;
     public $sslverify = true;
@@ -122,6 +122,7 @@ class Operator{
                         if( $this->body_format == 'json' ){
                             $this->$key = json_encode( $value );
                         }
+                        // Otherwise it's already been set as an array
                         break;
                     case 'stream':
                         $this->filename = null;
@@ -165,6 +166,7 @@ class Operator{
         if( isset( $args['description'] ) ) unset( $args['description'] );
         if( isset( $args['endpoint'] ) ) unset( $args['endpoint'] );
         if( isset( $args['route'] ) ) unset( $args['route'] );
+        if( isset( $args['body_format'] ) ) unset( $args['body_format'] );
         
         $args['method'] = $this->method; // Ensure method is uppercase
         $this->response = wp_remote_request($url, $args);

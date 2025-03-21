@@ -132,9 +132,9 @@ class Settings{
                 }
                 $html .= '</select>';
             } elseif( $name === 'body_format' ){
-                $value = 'json'; // TEMP: Force to JSON for now.
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 $html .= '<option value="json"' . ($value === 'json' ? ' selected' : '') . '>JSON</option>';
+                $html .= '<option value="array"' . ($value === 'array' ? ' selected' : '') . '>Array</option>';
                 $html .= '</select>';
             } elseif ($name === 'httpversion') {
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
@@ -350,6 +350,7 @@ class Settings{
             'redirection' => 'Number of allowed redirects. Not supported by all transports. Default 5.',
             'headers' => "Array or string of headers to send with the request. Default empty array.",
             'body' => "Body to send with the request. Default null.",
+            'body_format' => "Format the body before sending the request. Accepts 'json' or 'array'. Default 'json'.",
             'cookies' => "List of cookies to send with the request. Default empty array.",
             'stream' => "Whether to stream to a file. If set to true and no filename was given, it will be dropped it in the WP temp dir and its name will be set using the basename of the URL. Default false.",
             'filename' => "Filename of the file to write to when streaming. Stream must be set to true. Default null.",
