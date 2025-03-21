@@ -107,11 +107,13 @@ jQuery(document).ready(function($){
 
     // Initialize form elements
     const $form = $('.api-tester-form');
+    const $runButton = $('.api-tester-run');
     const $saveButton = $('.api-tester-save');
     const $duplicateButton = $('.api-tester-duplicate');
     const $deleteButton = $('.api-tester-delete');
     const $streamField = $('#api_tester_stream');
     const $filenameField = $('.form-field.api_tester_filename_field');
+    const $responseField = $('.api-response');
 
     // Add placeholder for title input
     $('.api-tester-form .form-field input[id="api_tester_title"]').attr('placeholder', 'Enter a title');
@@ -189,6 +191,34 @@ jQuery(document).ready(function($){
         return formData;
     }
 
+    // Handle running the API request
+    $runButton.on('click', function(e) {
+        e.preventDefault();
+
+        setFormLoading(true, $(this));
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: packageFormData( 'run_api_request' ),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    $responseField.html(response.data.html).show();
+                } else {
+                    console.log( response);
+                    alert('Error: Check console for details');
+                }
+                setFormLoading(false, $runButton);
+            },
+            error: function() {
+                alert('Error: Failed to run API request');
+                setFormLoading(false, $runButton);
+            }
+        });
+        
+    });
+
     // Handle preset saving
     $saveButton.on('click', function(e) {
         e.preventDefault();
@@ -219,12 +249,9 @@ jQuery(document).ready(function($){
                         $('.api-tester-presets').append($newButton);
                     }
                     
-                    $deleteButton.show();
-                    $form.attr('data-preset-id', presetId);
-                    $('#api_tester_title').val(presetTitle);
-                    $('#api_tester_allow_incrementing_title').val('0');
-                    update_active_form_visuals(presetId);
-                    setFormLoading(false);
+                    api_tester.presets[presetId] = response.data;
+                    update_form(presetId);
+                    return;
                 } else {
                     alert('Failed to save preset: ' + response.data.message);
                     setFormLoading(false);
@@ -299,6 +326,7 @@ jQuery(document).ready(function($){
     function update_active_form_visuals(presetId = '') {
         $('.api-preset').removeClass('active');
         $('.api-preset[data-preset-id="' + presetId + '"]').addClass('active');
+        $responseField.hide().empty();
 
         if(presetId) {
             $saveButton.val('Update Preset');
@@ -328,131 +356,18 @@ jQuery(document).ready(function($){
             $form[0].reset();
             $form.removeAttr('data-preset-id');
             $deleteButton.hide();
-            update_active_form_visuals('');
+            update_active_form_visuals();
             resetArrayInputs();
             return;
         }
 
         setFormLoading(true, $(this));
         update_form(presetId);
-        return;
-        
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'load_api_preset',
-                preset_id: presetId,
-                _ajax_nonce: api_tester.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    const data = api_tester.presets[presetId];
-
-                    // Update form fields
-                    // Reset form first
-                    $form.find('input[type="checkbox"]').prop('checked', false);
-                    $form.find('input[type="range"]').each(function() {
-                        $(this).val($(this).attr('min'));
-                        $(this).trigger('input');
-                    });
-
-                    // Handle unlimited size first to ensure proper range state
-                    const unlimitedValue = data['api_tester_unlimited_size'];
-                    const $unlimitedCheckbox = $('.unlimited-size');
-                    const isUnlimited = unlimitedValue === '1' || unlimitedValue === true || unlimitedValue === 'true' || unlimitedValue === 'on';
-                    $unlimitedCheckbox.prop('checked', isUnlimited);
-                    $unlimitedCheckbox.trigger('change');
-
-                    // Now update with preset values
-                    // First handle normal fields
-                    Object.entries(data).forEach(([key, value]) => {
-                        const $field = $form.find(`[name="${key}"]`);
-                        if (!$field.length) return;
-
-                        if ($field.is(':checkbox')) {
-                            const isChecked = value === '1' || value === true || value === 'true' || value === 'on';
-                            $field.prop('checked', isChecked);
-                            $field.trigger('change');
-                        } else if ($field.attr('type') === 'range') {
-                            $field.val(value);
-                            $field.trigger('input');
-                            // Update the range value display
-                            const $display = $field.next('.range-value');
-                            if ($display.length) {
-                                if (key === 'api_tester_limit_response_size') {
-                                    $display.text(formatBytes(value));
-                                } else {
-                                    $display.text(value);
-                                }
-                            }
-                        } else {
-                            $field.val(value);
-                        }
-                    });
-
-                    // Then handle array fields
-                    $('.array-inputs').each(function() {
-                        const fieldName = $(this).data('field');
-                        const key = 'api_tester_' + fieldName;
-                        $(this).find('.array-row').remove();
-
-                        if (data[fieldName]) {
-                            try {
-                                let arrayData;
-                                if (typeof data[fieldName] === 'string') {
-                                    // Handle potential double-encoded JSON
-                                    try {
-                                        arrayData = JSON.parse(data[fieldName]);
-                                    } catch (e1) {
-                                        try {
-                                            arrayData = JSON.parse(data[fieldName].replace(/\\/g, ''));
-                                        } catch (e2) {
-                                            arrayData = {};
-                                        }
-                                    }
-                                } else {
-                                    arrayData = data[fieldName];
-                                }
-
-                                if (arrayData && typeof arrayData === 'object') {
-                                    Object.entries(arrayData).forEach(([k, v]) => {
-                                        if (k && k.trim()) {
-                                            const $row = createArrayRow();
-                                            $row.find('.array-key').val(k.trim());
-                                            $row.find('.array-value').val(v || '');
-                                            $(this).find('.array-add').before($row);
-                                        }
-                                    });
-                                }
-                            } catch (e) {
-                                console.error('Error handling array data:', e);
-                            }
-                        }
-                        updateArrayField($(this));
-                    });
-
-                    // Handle stream field last
-                    $streamField.trigger('change');
-                    $deleteButton.show();
-                    $form.attr('data-preset-id', presetId);
-                    update_active_form_visuals(presetId);
-                    setFormLoading(false);
-                } else {
-                    alert('Failed to load preset: ' + response.data.message);
-                    setFormLoading(false);
-                }
-            },
-            error: function() {
-                alert('Error loading preset');
-                setFormLoading(false);
-            }
-        });
     });
 
     function update_form(presetId){
         const data = api_tester.presets[presetId];
-        
+
         // Update form fields
         // Reset form first
         $form.find('input[type="checkbox"]').prop('checked', false);

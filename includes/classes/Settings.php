@@ -4,7 +4,6 @@ defined( 'ABSPATH' ) || exit;
 class Settings{ 
     private static $instance;
     private $default_operator;
-    private $options_cache;
 
     /**
      * Store a different set of settings as a separate option and load all sets of settings into one array
@@ -26,6 +25,7 @@ class Settings{
         
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_enqueue_scripts', [$this, 'admin_enqueue_scripts']);
+        add_action('wp_ajax_run_api_request', [$this, 'handle_run_api_request']);
         add_action('wp_ajax_save_api_preset', [$this, 'handle_save_preset']);
         add_action('wp_ajax_load_api_preset', [$this, 'handle_load_preset']);
         add_action('wp_ajax_delete_api_preset', [$this, 'handle_delete_preset']);
@@ -69,6 +69,7 @@ class Settings{
                 </div>
                 <div class="api-settings">
                     <?php echo $this->get_settings(); ?>
+                    <?php echo $this->get_response(); ?>
                 </div>
             </div>
         </div>
@@ -110,14 +111,8 @@ class Settings{
         // If no ID provided, use the default operator instance
         $operator = $id === null ? $this->default_operator : new Operator();
         
-        // Get reflection of operator class to get public properties
-        $reflection = new \ReflectionClass($operator);
-        $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
-        
         $html = '<form class="api-tester-form" data-preset-id="' . esc_attr($id) . '">';
-        foreach ($properties as $property) {
-            $name = $property->getName();
-            $value = $property->getValue($operator);
+        foreach ($operator->get_args() as $name => $value) {
             $field_id = 'api_tester_' . $name;
             
             // Get tooltip text based on field name
@@ -190,8 +185,37 @@ class Settings{
         $html .= '<input type="button" value="Delete Preset" class="button button-secondary api-tester-delete" style="display:none;">';
         $html .= '</p>';
         $html .= '</form>';
+
         
         return $html;
+    }
+
+    private function get_response(){
+        return '<div class="api-response" data-preset-id=""></div>';
+    }
+
+    /**
+     * Handle running an API call
+     */
+    public function handle_run_api_request() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => 'Insufficient permissions']);
+        }
+
+        if (!check_ajax_referer('api_tester_nonce', '_ajax_nonce', false)) {
+            wp_send_json_error(['message' => 'Invalid nonce']);
+        }
+
+        $api = new Operator();
+        $api->set_args( $_POST );
+        $response = $api->request();
+
+        if (!$response) {
+            wp_send_json_error(['message' => 'JS Error: Failed to run API request']);
+        }
+
+        // Return the response
+        wp_send_json_success(['html' => "<pre>" . print_r( $response, true ) . "</pre>" ]);
     }
 
     /**
@@ -216,8 +240,9 @@ class Settings{
             wp_send_json_error(['message' => 'Title is required']);
         }
 
-        $allow_duplicates = isset($_POST['allow_incrementing_title']) && $_POST['allow_incrementing_title'] === '1';
-        $title = $this->validate_title($_POST['title'], $allow_duplicates);
+        $allow_incrementing_title = isset($_POST['allow_incrementing_title']) && $_POST['allow_incrementing_title'] === '1';
+        $title = $_POST['title'] ?? '';
+        $title = $this->validate_title($preset_id, $title, $allow_incrementing_title);
         if( !$title ) {
             wp_send_json_error(['message' => 'Title already exists']);
         }
@@ -226,34 +251,54 @@ class Settings{
         $preset_data = $_POST;
         $preset_data['title'] = $title;
 
-        // Handle array fields (headers, cookies, body)
-        $array_fields = ['headers', 'cookies', 'body'];
-        foreach ($array_fields as $field) {
-            if (isset($preset_data[$field])) {
-                $array_data = json_decode(stripslashes($preset_data[$field]), true);
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    $preset_data[$field] = $array_data;
+        // Convert property values to correct types and sanitize
+        foreach( $this->default_operator->get_public_property_names() as $property_name ){
+            // Skip the ones that are not set
+            if( !isset( $preset_data[ $property_name ] ) ){
+                continue;
+            }
+
+            // Sanitize string properties
+            if( $this->default_operator->get_property_type( $property_name ) === 'string' ){
+                $preset_data[ $property_name ] = sanitize_text_field( $preset_data[ $property_name ] );
+                continue;
+            }
+            
+            // Convert int properties
+            if( $this->default_operator->get_property_type( $property_name ) === 'int' ){
+                $preset_data[ $property_name ] = intval( $preset_data[ $property_name ] );
+                continue;
+            }
+            
+            // Convert float properties
+            if( $this->default_operator->get_property_type( $property_name ) === 'float' ){
+                $preset_data[ $property_name ] = floatval( $preset_data[ $property_name ] );
+                continue;
+            }
+            
+            // Handle checkbox/bool properties
+            if( $this->default_operator->get_property_type( $property_name ) === 'bool' ){
+                $preset_data[$property_name] = $preset_data[$property_name] === '1' || $preset_data[$property_name] === 'true' || 
+                                                    $preset_data[$property_name] === 'on' || $preset_data[$property_name] === 1 
+                                                    ? '1' : '0';
+                continue;
+            }
+            
+            // Handle array properties
+            if( $this->default_operator->get_property_type( $property_name ) === 'array' ){
+                $array_data = Operator::maybe_json_decode( stripslashes($preset_data[$property_name]), true );
+                if( is_array( $array_data ) ){
+                    $preset_data[$property_name] = $array_data;
                 } else {
-                    $preset_data[$field] = [];
+                    $preset_data[$property_name] = [];
                 }
             }
-        }
-
-        // Ensure checkbox fields are properly saved as boolean values
-        $checkbox_fields = ['stream', 'decompress', 'sslverify', 'blocking', 'reject_unsafe_urls', 'preserve_header_case'];
-        foreach ($checkbox_fields as $field) {
-            $preset_data[$field] = isset($preset_data[$field]) && 
-                                       ($preset_data[$field] === '1' || $preset_data[$field] === 'true' || 
-                                        $preset_data[$field] === 'on' || $preset_data[$field] === 1) ? '1' : '0';
         }
 
         $this->presets[$preset_id] = $preset_data;
         update_option(Main::SLUG . '_presets', $this->presets);
 
-        wp_send_json_success([
-            'preset_id' => $preset_id,
-            'title' => $title
-        ]);
+        wp_send_json_success($preset_data);
     }
 
     /**
@@ -291,23 +336,26 @@ class Settings{
      */
     private function get_field_tooltip($field_name) {
         $tooltips = [
+            'endpoint' => 'A common endpoint of an API request. Required field that must be a valid HTTP/HTTPS URL.',
+            'route' => 'A route of an API request. Optional field that gets appended to the end of the endpoint to create a full request URL.',
             'url' => 'The target URL for the API request. Required field that must be a valid HTTP/HTTPS URL.',
-            'method' => 'HTTP method for the request. If not selected, defaults to GET.',
-            'httpversion' => 'HTTP protocol version to use. If not specified, defaults to HTTP/1.1.',
-            'timeout' => 'Number of seconds to wait for the request to complete. If left blank, defaults to 5 seconds.',
-            'redirection' => 'Number of redirects to follow. If left blank, defaults to 5 redirects.',
-            'headers' => 'HTTP headers to send with the request. If left blank, default WordPress headers will be used.',
-            'body' => 'Request body data. For POST/PUT requests, this will be sent as form data. If left blank, no body will be sent.',
-            'cookies' => 'Cookies to send with the request. If left blank, no cookies will be sent.',
-            'stream' => 'Whether to stream the response to a file rather than load it into memory. Useful for large responses.',
-            'filename' => 'When stream is enabled, this is the filename where the response will be saved. If left blank, a temporary filename will be generated.',
-            'limit_response_size' => 'Maximum size of the response in bytes. Use the slider to adjust. If unlimited is checked, no size limit will be applied.',
-            'decompress' => 'Whether to decompress gzipped responses. If unchecked, compressed responses will remain compressed.',
-            'sslverify' => 'Whether to verify SSL certificates. Disable only for testing with self-signed certificates.',
-            'sslcertificates' => 'Path to a custom SSL certificate file. If left blank, WordPress default certificates will be used.',
-            'user_agent' => 'Custom User-Agent string. If left blank, WordPress default will be used.',
-            'blocking' => 'Whether to wait for the response. If unchecked, request will be sent asynchronously.',
-            'reject_unsafe_urls' => 'Reject URLs that WordPress considers unsafe. Recommended to leave enabled for security.',
+            'method' => "Request method. Accepts 'GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'TRACE', 'OPTIONS', or 'PATCH'. Some transports technically allow others, but should not be assumed. Default 'GET'.",
+            'httpversion' => "Version of the HTTP protocol to use. Accepts '1.0' and '1.1'. Default '1.0'.",
+            'timeout' => 'How long the connection should stay open in seconds. Default 5.',
+            'redirection' => 'Number of allowed redirects. Not supported by all transports. Default 5.',
+            'headers' => "Array or string of headers to send with the request. Default empty array.",
+            'body' => "Body to send with the request. Default null.",
+            'cookies' => "List of cookies to send with the request. Default empty array.",
+            'stream' => "Whether to stream to a file. If set to true and no filename was given, it will be dropped it in the WP temp dir and its name will be set using the basename of the URL. Default false.",
+            'filename' => "Filename of the file to write to when streaming. Stream must be set to true. Default null.",
+            'limit_response_size' => 'Maximum size of the response. Use the slider to adjust. If unlimited is checked, no size limit will be applied.',
+            'compress' => "Whether to compress the body when sending the request. Default false.",
+            'decompress' => "Whether to decompress a compressed response. If set to false and compressed content is returned in the response anyway, it will need to be separately decompressed. Default true.",
+            'sslverify' => "Whether to verify SSL for the request. Default true.",
+            'sslcertificates' => "Absolute path to an SSL certificate .crt file. Default " . ABSPATH . WPINC . "/certificates/ca-bundle.crt",
+            'user_agent' => "Custom User-Agent string. If left blank, WordPress default will be used. Default 'WordPress/' . get_bloginfo( 'version' ) . '; ' . get_bloginfo( 'url' ).",
+            'blocking' => "Whether the calling code requires the result of the request. If set to false, the request will be sent to the remote server, and processing returned to the calling code immediately, the caller will know if the request succeeded or failed, but will not receive any response from the remote server. Default true.",
+            'reject_unsafe_urls' => "Whether to pass URLs through wp_http_validate_url(). Default false.",
             'preserve_header_case' => 'Preserve the case of HTTP header names. If unchecked, headers will be normalized to lowercase.',
         ];
 
@@ -341,13 +389,16 @@ class Settings{
         }
     }
 
-    private function validate_title($title, $allow_duplicates = false) {
+    private function validate_title($preset_id, $title, $allow_duplicates = false) {
         $title = sanitize_text_field($title);
 
-        if( $this->title_exists($title) ){
-            $title = $allow_duplicates ? $this->increment_title_number($title) : false;
+        // If this is a new preset, make sure the title doesn't already exist or increment the number
+        if( $this->is_new_preset($preset_id) ){
+            if( $this->title_exists($title) ){
+                $title = $allow_duplicates ? $this->increment_title_number($title) : false;
+            }
         }
-        
+
         return $title;
     }
 
@@ -372,6 +423,10 @@ class Settings{
         }
 
         return $title;
+    }
+
+    private function is_new_preset($preset_id) {
+        return !isset($this->presets[$preset_id]);
     }
 
     private function title_exists($title) {
