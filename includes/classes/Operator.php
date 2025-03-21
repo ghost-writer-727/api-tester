@@ -20,6 +20,7 @@ class Operator{
     ];
     public $cookies = [];
     public $body = [];
+    public $body_format = 'json'; // 'json','array', 'string';
     public $compress = false;
     public $decompress = true;
     public $sslverify = true;
@@ -59,6 +60,7 @@ class Operator{
             'headers',
             'cookies',
             'body',
+            'body_format',
             'compress',
             'decompress',
             'sslverify',
@@ -116,6 +118,9 @@ class Operator{
                     case 'body':
                         if( empty( $value ) ){
                             $this->$key = null;
+                        }
+                        if( $this->body_format == 'json' ){
+                            $this->$key = json_encode( $value );
                         }
                         break;
                     case 'stream':

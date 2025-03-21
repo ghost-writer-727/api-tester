@@ -131,6 +131,11 @@ class Settings{
                     $html .= '<option value="' . $method . '"' . ($value === $method ? ' selected' : '') . '>' . $method . '</option>';
                 }
                 $html .= '</select>';
+            } elseif( $name === 'body_format' ){
+                $value = 'json'; // TEMP: Force to JSON for now.
+                $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
+                $html .= '<option value="json"' . ($value === 'json' ? ' selected' : '') . '>JSON</option>';
+                $html .= '</select>';
             } elseif ($name === 'httpversion') {
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 $html .= '<option value="1.0"' . ($value === '1.0' ? ' selected' : '') . '>1.0</option>';
