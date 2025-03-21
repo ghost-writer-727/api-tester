@@ -9,7 +9,7 @@ class Operator{
     public $route;
     public $timeout = 5;
     public $redirection = 5;
-    public $httpversion = '1.0';
+    public $httpversion = '1.1';
     public $user_agent; // Defaults to get_bloginfo( 'url' ) on construction
     public $reject_unsafe_urls = false;
     public $blocking = true;
