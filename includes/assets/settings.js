@@ -283,9 +283,19 @@ jQuery(document).ready(function($){
 
         if(presetId) {
             $('.api-tester-form[data-preset-id="' + presetId + '"] .api-tester-save').val('Update Preset');
+        } else {
+            $('.api-tester-form .api-tester-save').val('Create Preset');
         }
     }
     update_active_form_visuals();
+
+    // Reset array inputs to initial state
+    function resetArrayInputs() {
+        $('.array-inputs').each(function() {
+            $(this).find('.array-row').remove();
+            $(this).find('input[type="hidden"]').val('{}');
+        });
+    }
 
     // Handle preset button clicks
     $(document).on('click', '.api-preset', function() {
@@ -296,6 +306,7 @@ jQuery(document).ready(function($){
             $form.removeAttr('data-preset-id');
             $deleteButton.hide();
             update_active_form_visuals('');
+            resetArrayInputs();
             return;
         }
 
