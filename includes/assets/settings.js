@@ -406,6 +406,19 @@ jQuery(document).ready(function($){
                     }
                 }
             } else {
+                // Try to unescape string values for text fields
+                if (typeof value === 'string') {
+                    try {
+                        // First try to parse as JSON in case it's a stringified object/array
+                        const parsed = JSON.parse(value);
+                        if (typeof parsed === 'object') {
+                            value = JSON.stringify(parsed, null, 2);
+                        }
+                    } catch (e) {
+                        // If it's not JSON, unescape the string
+                        value = value.replace(/\\/g, '');
+                    }
+                }
                 $field.val(value);
             }
         });
@@ -438,8 +451,29 @@ jQuery(document).ready(function($){
                         Object.entries(arrayData).forEach(([k, v]) => {
                             if (k && k.trim()) {
                                 const $row = createArrayRow();
-                                $row.find('.array-key').val(k.trim());
-                                $row.find('.array-value').val(v || '');
+                                // Unescape array key and value if they're strings
+                                let key = k.trim();
+                                let val = v || '';
+                                
+                                if (typeof key === 'string') {
+                                    key = key.replace(/\\/g, '');
+                                }
+                                
+                                if (typeof val === 'string') {
+                                    try {
+                                        // Try to parse as JSON first
+                                        const parsed = JSON.parse(val);
+                                        if (typeof parsed === 'object') {
+                                            val = JSON.stringify(parsed, null, 2);
+                                        }
+                                    } catch (e) {
+                                        // If not JSON, just unescape the string
+                                        val = val.replace(/\\/g, '');
+                                    }
+                                }
+                                
+                                $row.find('.array-key').val(key);
+                                $row.find('.array-value').val(val);
                                 $(this).find('.array-add').before($row);
                             }
                         });
