@@ -68,8 +68,8 @@ class Settings{
                     </div>
                 </div>
                 <div class="api-settings">
-                    <?php echo $this->get_settings(); ?>
-                    <?php echo $this->get_response(); ?>
+                    <?php echo $this->get_settings_html(); ?>
+                    <?php echo $this->get_responses_html(); ?>
                 </div>
             </div>
         </div>
@@ -107,7 +107,7 @@ class Settings{
      * @param string|null $id ID of the settings preset to load
      * @return string HTML output
      */
-    public function get_settings($id = null) {
+    public function get_settings_html($id = null) {
         // If no ID provided, use the default operator instance
         $operator = $id === null ? $this->default_operator : new Operator();
         
@@ -190,13 +190,103 @@ class Settings{
         $html .= '<input type="button" value="Delete Preset" class="button button-secondary api-tester-delete" style="display:none;">';
         $html .= '</p>';
         $html .= '</form>';
-
         
         return $html;
     }
 
-    private function get_response(){
-        return '<div class="api-response" data-preset-id=""></div>';
+    private function get_responses_html($preset_id = null, $response_timestamp = null){
+        $html = '<div class="api-results">';
+        
+        foreach( $this->presets as $preset_id => $preset ){
+            // If a preset id is specified, only show that preset
+            if( $preset_id !== null and $preset_id !== $preset_id ){
+                continue;
+            }
+
+            // If there are no responses, skip this preset
+            if( ! isset( $preset['responses'] ) || empty( $preset['responses'] )){
+                continue;
+            }
+            
+            // Create a div for the preset
+            $html .= '<div class="api-results-group" data-preset-id="' . esc_attr($preset_id) . '">';
+
+            // Hold all the response tabs for each id in it's own div
+            $html .= '<div class="api-response-tabs">';
+            foreach( $preset['responses'] as $key => $response){
+                // If a response timestamp is specified, only show that response
+                if( $response_timestamp !== null and $response_timestamp !== $response['timestamp'] ){
+                    continue;
+                }
+                $html .= $this->get_response_tab($key, $response);
+            }
+            $html .= '</div> <!-- End Response Tabs -->';
+
+            // Hold all the responses for each id in it's own div
+            $html .= '<div class="api-responses">';
+            foreach( $preset['responses'] as $response ){
+                // If a response timestamp is specified, only show that response
+                if( $response_timestamp !== null and $response_timestamp !== $response['timestamp'] ){
+                    continue;
+                }
+                // We use the timestamp as the response id, so it is required.
+                if( ! isset( $response['timestamp'] )){
+                    continue;
+                }
+                // Create a div with class api-response
+                $html .= '<div class="api-response" data-preset-id="' . esc_attr($preset_id) . '" data-response-timestamp="' . esc_attr($response['timestamp']) . '">';
+                
+                // Create section header with the status code and date
+                $html .= '<div class="api-response-header">' . $this->get_response_header($response) . '</div>';
+
+                // Create a section for the response body
+                // $html .= '<p class="api-response-show-response show-hide-wrapper" data-show-hide="api-response-body" data-show-hide-group="api-response"><span class="show-hide-toggle">Hide</span> Response Body</p>';
+                $html .= '<div class="api-response-body">' . $this->get_response_body($response) . '</div>';
+
+                // Create a section for the args
+                // $html .= '<p class="api-response-show-args show-hide-wrapper" data-show-hide="api-response-args" data-show-hide-group="api-response"><span class="show-hide-toggle">Show</span> Request Args</p>';
+                $html .= '<div class="api-response-args" style="display: none;">' . $this->get_response_args($response) . '</div>';
+
+                // Create a section for full details
+                // $html .= '<p class="api-response-show-details show-hide-wrapper" data-show-hide="api-response-details" data-show-hide-group="api-response"><span class="show-hide-toggle">Show</span> Full Details</p>';
+                $html .= '<div class="api-response-details" style="display: none;">' . $this->get_response_details($response) . '</div>';
+
+                $html .= '</div> <!-- End Response ID: ' . esc_attr($response['timestamp']) . ' -->';
+            }
+            $html .= '</div> <!-- End Responses -->';
+            $html .= '</div> <!-- End Results Group for Preset ID: ' . esc_attr($preset_id) . ' -->';
+        }
+        $html .= '</div> <!-- End Results -->';
+        return $html;
+    }
+
+    private function get_response_tab($key, $response){
+        $id = $response['timestamp'];
+        $html = '<input type="button" class="button api-response-tab" data-response-timestamp="' . esc_attr($id) . '" value="' . esc_html($key) . '" />';
+        return $html;
+    }
+
+    private function get_response_header($response){
+        $status = isset($response['status_code']) ? esc_html($response['status_code']) : 'Unknown';
+        $date_time = date('M d, Y H:i', $response['timestamp']);
+        $html = '<div class="api-response-status">' . $status . '</div>';
+        $html .= '<div class="api-response-time">' . $date_time . '</div>';
+        return $html;
+    }
+
+    private function get_response_body($response){
+        $body = isset($response['body']) ? '<pre>' . print_r($response['body'],true) . '</pre>' : '';
+        return $body;
+    }
+
+    private function get_response_args($response){
+        $args = isset($response['args']) ? '<pre>' . print_r($response['args'], true) . '</pre>' : '';
+        return $args;
+    }
+
+    private function get_response_details($response){
+        $details = '<pre>' . print_r($response, true) . '</pre>';
+        return $details;
     }
 
     /**
@@ -219,8 +309,14 @@ class Settings{
             wp_send_json_error(['message' => 'JS Error: Failed to run API request']);
         }
 
+        // Store the response
+        $preset_id = isset($_POST['preset_id']) ? sanitize_text_field($_POST['preset_id']) : '';
+        if( $preset_id ){
+            $this->store_response( $preset_id, $response );
+        }
+
         // Return the response
-        wp_send_json_success(['html' => "<pre>" . print_r( $response, true ) . "</pre>" ]);
+        wp_send_json_success(['details' => "<pre>" . print_r( $response, true ) . "</pre>" ]);
     }
 
     /**
@@ -300,7 +396,8 @@ class Settings{
             }
         }
 
-        $this->presets[$preset_id] = $preset_data;
+        // Update settings, without overriding results
+        $this->presets[$preset_id] = array_merge( $this->presets[$preset_id], $preset_data );
         update_option(Main::SLUG . '_presets', $this->presets);
 
         wp_send_json_success($preset_data);
@@ -439,6 +536,23 @@ class Settings{
         return in_array($title, array_map(function($preset) {
             return $preset['title'];
         }, $this->presets));
+    }
+
+    private function store_response( $preset_id, $response ){
+        if( !isset($this->presets[$preset_id]['responses']) ){
+            $this->presets[$preset_id]['responses'] = [];
+        }
+
+        // insert response at beginning of array
+        array_unshift($this->presets[$preset_id]['responses'], $response);
+        
+        // remove any responses over the max
+        $max_responses = 10;
+        while( count($this->presets[$preset_id]['responses']) > $max_responses ){
+            array_pop($this->presets[$preset_id]['responses']);
+        }
+
+        update_option(Main::SLUG . '_presets', $this->presets);
     }
 
 }

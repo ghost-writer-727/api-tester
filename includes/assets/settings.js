@@ -113,6 +113,12 @@ jQuery(document).ready(function($){
     const $deleteButton = $('.api-tester-delete');
     const $streamField = $('#api_tester_stream');
     const $filenameField = $('.form-field.api_tester_filename_field');
+
+    // Initialize Results section
+    const $resultsSection = $('.api-results');
+
+
+
     const $responseField = $('.api-response');
 
     // Add placeholder for title input
@@ -204,7 +210,7 @@ jQuery(document).ready(function($){
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    $responseField.html(response.data.html).show();
+                    $responseField.html(response.data.details).show();
                 } else {
                     console.log( response);
                     alert('Error: Check console for details');
@@ -323,12 +329,37 @@ jQuery(document).ready(function($){
     });
 
     // Update active form visuals
-    function update_active_form_visuals(presetId = '') {
+    function update_active_form_visuals(presetId = '', responseTimestamp = '') {
         $('.api-preset').removeClass('active');
         $('.api-preset[data-preset-id="' + presetId + '"]').addClass('active');
-        $responseField.hide().empty();
+
+        // Hide all groups
+        $('.api-results-group').hide();
 
         if(presetId) {
+            const resultsGroupId = '.api-results-group[data-preset-id="' + presetId + '"]';
+            const $resultsGroup = $(resultsGroupId);
+            const $responseTabs = $(resultsGroupId + ' .api-response-tab');
+            const $responses = $(resultsGroupId + ' .api-response');
+
+            $resultsGroup.show();
+            $responseTabs.each(function() {
+                $(this).removeClass('active');
+            });
+            $responses.hide();
+
+            if(responseTimestamp) {
+                const $tab = $responseTabs.filter('[data-response-timestamp="' + responseTimestamp + '"]');
+                const $response = $responses.filter('[data-response-timestamp="' + responseTimestamp + '"]');
+                $tab.addClass('active');
+                $response.show();
+            } else {
+                // Show the first response
+                $responseTabs.first().addClass('active');
+                $responses.first().show();
+            }
+
+            refresh_response_tab_listeners();
             $saveButton.val('Update Preset');
             $duplicateButton.show();
             $deleteButton.show();
@@ -339,6 +370,14 @@ jQuery(document).ready(function($){
         }
     }
     update_active_form_visuals();
+
+    function refresh_response_tab_listeners(){
+        $('.api-response-tab').off('click').on('click', function() {
+            const responseTimestamp = $(this).data('response-timestamp');
+            const presetId = $(this).closest('.api-results-group').data('preset-id');
+            update_active_form_visuals(presetId, responseTimestamp);
+        });
+    }
 
     // Reset array inputs to initial state
     function resetArrayInputs() {
@@ -360,7 +399,7 @@ jQuery(document).ready(function($){
             resetArrayInputs();
             return;
         }
-
+        
         setFormLoading(true, $(this));
         update_form(presetId);
     });

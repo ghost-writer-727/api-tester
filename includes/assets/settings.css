@@ -269,6 +269,8 @@ input[type="range"]:disabled {
 .wp-core-ui .api-tester .button.api-preset.active:hover{
     transform: translateY(0);
     cursor: default;
+    pointer-events: none;
+    
 }
 
 .wp-core-ui .api-tester .api-tester-buttons .button{
@@ -392,4 +394,22 @@ input[type="range"]:disabled {
 /* Arrow */
 .api-tester-form .woocommerce-help-tip::after {
     z-index: 101;
+}
+
+/* Results section */
+.api-tester .button.api-response-tab {
+    background: #8d8d8d;
+    color: #ccc;
+    box-shadow: none;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.api-tester .button.api-response-tab.active {
+    background: #f5f5f5;
+    color: #000;
+    cursor: default;
+    pointer-events: none;
+    outline: 2px solid #00a386ab;
+    outline-offset: -2px;
 }

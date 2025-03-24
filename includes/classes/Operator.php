@@ -118,14 +118,15 @@ class Operator{
                     case 'body':
                         if( empty( $value ) ){
                             $this->$key = null;
-                        }
-                        if( $this->body_format == 'json' ){
+                        } else if( $this->body_format == 'json' && is_array( $value ) ){
                             $this->$key = json_encode( $value );
                         }
                         // Otherwise it's already been set as an array
                         break;
                     case 'stream':
-                        $this->filename = null;
+                        if( empty( $value ) ){
+                            $this->filename = null;
+                        }
                         break;
                     case 'limit_response_size':
                         if( ! is_numeric( $value ) ){
@@ -179,17 +180,19 @@ class Operator{
             $this->error = $this->response->get_error_message();
             return [
                 'error' => $this->error,
-                'response' => null,
+                'body' => null,
                 'status_code' => null,
-                'args' => $this->get_args()
+                'args' => $this->get_args(),
+                'timestamp' => time()
             ];
         }
 
         return [
             'error' => null,
-            'response' => self::maybe_json_decode( wp_remote_retrieve_body($this->response) ),
+            'body' => self::maybe_json_decode( wp_remote_retrieve_body($this->response) ),
             'status_code' => wp_remote_retrieve_response_code($this->response),
-            'args' => $this->get_args()
+            'args' => $this->get_args(),
+            'timestamp' => time(),
         ];
     }
 
