@@ -406,6 +406,9 @@ class Settings{
             }
         }
 
+        if( !isset( $this->presets[$preset_id]) ){
+            $this->presets[$preset_id] = [];
+        }
         // Update settings, without overriding results
         $this->presets[$preset_id] = array_merge( $this->presets[$preset_id], $preset_data );
         update_option(Main::SLUG . '_presets', $this->presets);
