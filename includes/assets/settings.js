@@ -546,6 +546,7 @@ jQuery(document).ready(function($){
     function populateTabs(responseTimestamp){
         $responseTabs.empty();
         const responses = getResponsesForPreset();
+        console.log( responses );
         if( ! responses.length ){
             return;
         }
@@ -676,7 +677,9 @@ jQuery(document).ready(function($){
     } 
 
     function formatDateTime(timestamp) {
-        const dateTime = new Date(timestamp);
+        // Convert seconds to milliseconds if needed
+        const timestampMs = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp;
+        const dateTime = new Date(timestampMs);
         return dateTime.toLocaleDateString('en-US', {
             month: '2-digit',
             day: '2-digit',
