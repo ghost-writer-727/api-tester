@@ -184,9 +184,9 @@ class Settings{
         
         $html .= '<input type="hidden" id="api_tester_allow_incrementing_title" name="allow_incrementing_title" value="0">';
         $html .= '<p class="api-tester-buttons">';
-        $html .= '<input type="button" value="Run Test" class="button button-primary api-tester-run">';
+        $html .= '<input type="button" value="Send Request" class="button button-primary api-tester-run">';
         $html .= '<input type="button" value="Create Preset" class="button button-secondary api-tester-save">';
-        $html .= '<input type="button" value="Create New From This" class="button button-secondary api-tester-duplicate" style="display:none;">';
+        $html .= '<input type="button" value="Copy to New" class="button button-secondary api-tester-duplicate" style="display:none;">';
         $html .= '<input type="button" value="Delete Preset" class="button button-secondary api-tester-delete" style="display:none;">';
         $html .= '</p>';
         $html .= '</form>';
@@ -195,6 +195,16 @@ class Settings{
     }
 
     private function get_responses_html($preset_id = null, $response_timestamp = null){
+
+        $html = '<div class="api-results" data-preset-id="" data-response-timestamp="">';
+        $html .= '<div class="api-response-tabs">';
+        $html .= '<input type="button" class="button api-response-tab" data-response-timestamp="" value="" />';
+        $html .= '</div> <!-- End Response Tabs -->';
+        $html .= '<h4 class="api-response-header"></h4> <!-- End Response Header -->';
+        $html .= '<div class="api-response-body"></div> <!-- End Response Body -->';
+        $html .= '<div class="api-response-args"></div>';
+        $html .= '</div> <!-- End API Results -->';
+        return $html;
         $html = '<div class="api-results">';
         
         foreach( $this->presets as $preset_id => $preset ){
@@ -316,7 +326,7 @@ class Settings{
         }
 
         // Return the response
-        wp_send_json_success(['details' => "<pre>" . print_r( $response, true ) . "</pre>" ]);
+        wp_send_json_success(['presets' => $this->presets]);
     }
 
     /**
@@ -400,7 +410,7 @@ class Settings{
         $this->presets[$preset_id] = array_merge( $this->presets[$preset_id], $preset_data );
         update_option(Main::SLUG . '_presets', $this->presets);
 
-        wp_send_json_success($preset_data);
+        wp_send_json_success(['preset_id' => $preset_id, 'presets' => $this->presets]);
     }
 
     /**
@@ -486,7 +496,7 @@ class Settings{
         if (isset($this->presets[$preset_id])) {
             unset($this->presets[$preset_id]);
             update_option(Main::SLUG . '_presets', $this->presets);
-            wp_send_json_success();
+            wp_send_json_success(['presets' => $this->presets]);
         } else {
             wp_send_json_error('Preset not found');
         }

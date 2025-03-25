@@ -1,67 +1,66 @@
 .api-tester {
-    padding: 2em;
-    background: #eee;
-    display: flex;
-    gap: 2em;
-    margin: 1em;
+  padding: 2em;
+  background: #eee;
+  display: flex;
+  gap: 2em;
+  margin: 1em;
 }
 
 .api-presets {
-    flex: 0 0 250px;
-    background: white;
-    padding: 2em;
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
+  flex: 0 0 250px;
+  background: white;
+  padding: 2em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
 }
 
 .api-tester-presets {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin-bottom: 0;
 }
 
-.api-preset {
-    width: 100%;
-    text-align: left;
-    padding: 8px 12px;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.wp-core-ui .api-tester .button.api-preset {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.api-preset.active {
-    background: #2271b1;
-    color: #fff;
-    border-color: #2271b1;
+.wp-core-ui .api-tester .button.api-preset.active {
+  margin-bottom: 0;
 }
 
 .api-settings {
-    flex: 1;
-    background: white;
-    padding: 2em;
-    min-width: 0; /* Prevent flex item from overflowing */
+  flex: 1;
+  background: white;
+  padding: 2em;
+  min-width: 0; /* Prevent flex item from overflowing */
 }
 
 .api-tester-form .form-field {
-    display: flex;
-    align-items: flex-start;
-    margin: 1em 0;
-    gap: 1em;
+  display: flex;
+  align-items: flex-start;
+  margin: 1em 0;
+  gap: 1em;
 }
 
 .api-tester-form .form-field label {
-    flex: 0 0 140px;
-    padding-top: 5px;
+  flex: 0 0 140px;
+  padding-top: 5px;
 }
 
 .api-tester-form .form-field input,
 .api-tester-form .form-field textarea {
-    background: #eee;
-    padding: 3px 15px;
-    border: none;
-    box-shadow: none;
+  background: #eee;
+  padding: 3px 15px;
+  border: none;
+  box-shadow: none;
 }
 
 .api-tester-form .form-field input[type="text"],
@@ -69,347 +68,423 @@
 .api-tester-form .form-field select,
 .api-tester-form .form-field textarea,
 .api-tester-form .form-field .input-wrapper {
-    flex: 1;
-    min-width: 0;
-    width: 100%;
-    border-radius: 0;
-    border-style: none;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border-radius: 0;
+  border-style: none;
 }
 
 .api-tester-form .form-field.api_tester_title_field {
-    margin-top: 0;
+  margin-top: 0;
 }
 
-.api-tester-form .form-field label[for="api_tester_title"]{
-    display: none;
+.api-tester-form .form-field label[for="api_tester_title"] {
+  display: none;
 }
 
 .api-tester-form .form-field input[id="api_tester_title"],
-.api-presets h2{
-    text-align: center;
-    margin: 0 0 5px;
-    font-size: 1.3em;
-    color: #1d2327;
-    font-weight: 600;
-    padding: 0;
+.api-presets h2 {
+  text-align: center;
+  margin: 0 0 5px;
+  font-size: 1.3em;
+  color: #1d2327;
+  font-weight: 600;
+  padding: 0;
 }
 
 .api-tester-form .form-field input[id="api_tester_title"]::placeholder {
-    color: #1d232733;
+  color: #1d232733;
 }
 
 .api-tester-form .form-field input[type="checkbox"] {
-    margin-top: 5px;
+  margin-top: 5px;
 }
 
 .input-wrapper {
-    display: flex;
+  display: flex;
 }
 
 .array-inputs {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5em;
-    width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  width: 100%;
 }
 
 .array-row {
-    display: flex;
-    gap: 0.5em;
-    align-items: center;
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
 }
 
 .array-row .array-key,
 .array-row .array-value {
-    background: #eee;
-    padding: 3px 15px;
+  background: #eee;
+  padding: 3px 15px;
 }
 
 /* Range slider styling */
 .response-size-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 input[type="range"] {
-    flex: 1;
-    height: 30px;
+  flex: 1;
+  height: 30px;
 }
 
 .range-value {
-    min-width: 60px;
-    display: inline-block;
-    padding: 5px 10px;
+  min-width: 60px;
+  display: inline-block;
+  padding: 5px 10px;
 }
 
 .unlimited-label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-    padding-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  padding-top: 0;
 }
 
 .api-tester-form .form-field .unlimited-label input[type="checkbox"] {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 /* Disabled slider styling */
 input[type="range"]:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Hide filename field when stream is unchecked */
 .form-field.api_tester_filename_field {
-    display: none;
+  display: none;
 }
 
 /* Numeric input width */
 .numeric-input {
-    width: 150px !important;
+  width: 150px !important;
 }
 
 /* Title styling */
 .api-tester-form .form-field input[id="api_tester_title"],
 .api-presets h2 {
-    text-align: center;
-    margin: 0 0 5px;
-    font-size: 1.3em;
-    color: #1d2327;
-    font-weight: 600;
-    padding: 0;
-    width: 100%;
-    background: #fff;
+  text-align: center;
+  margin: 0 0 5px;
+  font-size: 1.3em;
+  color: #1d2327;
+  font-weight: 600;
+  padding: 0;
+  width: 100%;
+  background: #fff;
 }
 
 .api-tester-form .form-field input[id="api_tester_title"]::placeholder {
-    color: #1d232733;
+  color: #1d232733;
 }
 
 .array-row .array-key {
-    flex: 0 0 30%;
+  flex: 0 0 30%;
 }
 
 .array-row .array-value {
-    flex: 1;
+  flex: 1;
 }
 
 .array-row .array-remove {
-    color: #dc3232;
-    padding: 0;
-    opacity: 0.5;
-    transition: opacity 0.2s;
+  color: #dc3232;
+  padding: 0;
+  opacity: 0.5;
+  transition: opacity 0.2s;
 }
 
 .array-row .array-remove:hover {
-    opacity: 1;
-    color: #dc3232;
+  opacity: 1;
+  color: #dc3232;
 }
 
-
 .array-row .array-remove .dashicons {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 .wp-core-ui .api-tester .button.array-add {
-    align-self: flex-start;
-    margin-top: 0.5em;
-    margin-bottom: 5px;
+  align-self: flex-start;
+  margin-top: 0.5em;
+  margin-bottom: 5px;
 }
 
 .preset-name-field {
-    margin: 15px 0;
+  margin: 15px 0;
 }
 
 .preset-name-field label {
-    display: inline-block;
-    margin-right: 10px;
+  display: inline-block;
+  margin-right: 10px;
 }
 
 .preset-name-field input {
-    width: 200px;
+  width: 200px;
 }
 
 .api-tester-buttons {
-    text-align: center;
-    margin-top: 2.5em;
+  text-align: center;
+  margin-top: 2.5em;
 }
 
 .wp-core-ui .api-tester .button,
 .wp-core-ui .api-tester .button-primary,
 .wp-core-ui .api-tester .api-preset.active {
-    background: #00a386;
-    color: white;
-    margin-right: 15px;
-    border-radius: 0;
-    padding: .5em 2em;
-    border-style: none;
-    transition: transform 0.1s ease-in;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #00a386;
+  color: white;
+  margin-right: 15px;
+  margin-bottom: 15px;
+  border-radius: 0;
+  padding: 0.5em 2em;
+  border-style: none;
+  transition: transform 0.1s ease-in;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .wp-core-ui .api-tester .button-secondary,
 .wp-core-ui .api-tester .api-preset {
-    background: #696969;
-}    
+  background: #696969;
+}
 
 .wp-core-ui .api-tester .api-preset,
 .wp-core-ui .api-tester .api-preset.active {
-    margin-right: 0;   
+  margin-right: 0;
 }
 
 .wp-core-ui .api-tester .button:hover {
-    transform: translateY(2px);
+  transform: translateY(2px);
 }
 
-
-.wp-core-ui .api-tester .button.api-preset.active:hover{
-    transform: translateY(0);
-    cursor: default;
-    pointer-events: none;
-    
+.wp-core-ui .api-tester .button.api-preset.active:hover {
+  transform: translateY(0);
+  cursor: default;
+  pointer-events: none;
 }
 
-.wp-core-ui .api-tester .api-tester-buttons .button{
-    width: 20%;
+.wp-core-ui .api-tester .api-tester-buttons .button {
+  width: 20%;
 }
 
 /* Loading overlay */
 .api-tester-form-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.1);
-    display: none;
-    z-index: 100;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  display: none;
+  z-index: 100;
 }
 
 .api-tester-form-overlay.active {
-    display: block;
+  display: block;
 }
 
 /* Loading spinner */
 .button-loading {
-    position: relative;
-    color: transparent !important;
+  position: relative;
+  color: transparent !important;
 }
 
 .button-loading::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    margin: -8px 0 0 -8px;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    border-top-color: transparent;
-    animation: button-loading-spinner 0.6s linear infinite;
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  animation: button-loading-spinner 0.6s linear infinite;
 }
 
 @keyframes button-loading-spinner {
-    from {
-        transform: rotate(0turn);
-    }
-    to {
-        transform: rotate(1turn);
-    }
+  from {
+    transform: rotate(0turn);
+  }
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 .wp-core-ui .api-tester .button.api-tester-duplicate {
-    background: #4d5abb;
+  background: #4d5abb;
 }
 
 .wp-core-ui .api-tester .button.api-tester-delete {
-    background: #bb4d6e;
+  background: #bb4d6e;
 }
 
 /* Tooltip styles */
 .api-tester-form .woocommerce-help-tip {
-    margin-left: 5px;
-    position: relative;
+  margin-left: 5px;
+  position: relative;
 }
 
 .api-tester-form label {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .api-tester-form .woocommerce-help-tip::after {
-    font-family: Dashicons;
-    font-weight: 400;
-    font-variant: normal;
-    text-transform: none;
-    line-height: 1;
-    margin: 0;
-    text-indent: 0;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    content: "\f223";
-    cursor: help;
-    font-size: 16px;
-    color: #666;
+  font-family: Dashicons;
+  font-weight: 400;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  margin: 0;
+  text-indent: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  content: "\f223";
+  cursor: help;
+  font-size: 16px;
+  color: #666;
 }
 
 /* Tooltip popup */
 .api-tester-form .woocommerce-help-tip {
-    width: 16px;
-    height: 16px;
-    display: inline-block;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
 }
 
 .api-tester-form .woocommerce-help-tip::before {
-    content: attr(data-tip);
-    position: absolute;
-    background: #333;
-    color: #fff;
-    padding: 8px 12px;
-    font-size: 13px;
-    line-height: 1.4;
-    border-radius: 3px;
-    display: none;
-    white-space: pre-wrap;
-    width: 200px;
-    text-align: left;
-    z-index: 100;
-    top: -10px;
-    left: 25px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  content: attr(data-tip);
+  position: absolute;
+  background: #333;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 3px;
+  display: none;
+  white-space: pre-wrap;
+  width: 200px;
+  text-align: left;
+  z-index: 100;
+  top: -10px;
+  left: 25px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .api-tester-form .woocommerce-help-tip:hover::before {
-    display: block;
+  display: block;
 }
 
 /* Arrow */
 .api-tester-form .woocommerce-help-tip::after {
-    z-index: 101;
+  z-index: 101;
 }
 
 /* Results section */
+.api-tester .api-results {
+  background: aliceblue;
+  padding: 1em;
+  margin-top: 2em;
+}
+
 .api-tester .button.api-response-tab {
-    background: #8d8d8d;
-    color: #ccc;
-    box-shadow: none;
-    border-radius: 10px;
-    font-weight: bold;
+  background: #fff;
+  color: #777;
+  box-shadow: none;
+  font-weight: bold;
+  font-size: 0.8em;
+  padding: 0.25em 1em;
 }
 
 .api-tester .button.api-response-tab.active {
-    background: #f5f5f5;
-    color: #000;
-    cursor: default;
-    pointer-events: none;
-    outline: 2px solid #00a386ab;
-    outline-offset: -2px;
+  background: #f5f5f5;
+  color: #000;
+  cursor: default;
+  pointer-events: none;
+  outline: 2px solid #00a386ab;
+  outline-offset: -2px;
+}
+
+.api-tester .api-results table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #000;
+  border: 1px #ccc solid;
+  margin: 8px 0;
+}
+
+.api-tester .api-results table table {
+  margin: 4px 0;
+  border: none;
+  background: #f5f5f5;
+}
+
+.api-tester .api-results td.key {
+  font-weight: 600;
+  color: #2271b1;
+  width: 200px;
+  vertical-align: top;
+}
+
+.api-tester .api-results td.value {
+  word-break: break-word;
+}
+
+.api-tester .api-results thead {
+  background: #f9f9f9;
+}
+
+.api-tester .api-results th,
+.api-tester .api-results td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.api-tester .api-results th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.api-tester .api-results tbody tr:hover {
+  background: #f5f5f5;
+  transition: background 0.2s ease;
+}
+
+.api-tester .api-results tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.api-tester .api-response-header {
+  font-size: 1.2em;
+}
+
+.api-tester .api-response-body {
+}
+
+.api-tester .api-response-args {
+}
+
+.api-tester pre {
+  background-color: #333;
+  color: #ccc;
+  padding: 1em;
+  overflow: scroll;
 }

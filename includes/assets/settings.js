@@ -1,7 +1,23 @@
 jQuery(document).ready(function($){
-    // Add overlay div to form
+    // Initialize form elements
+    const $form = $('.api-tester-form');
+    const $runButton = $('.api-tester-run');
+    const $saveButton = $('.api-tester-save');
+    const $duplicateButton = $('.api-tester-duplicate');
+    const $deleteButton = $('.api-tester-delete');
+    const $streamField = $('#api_tester_stream');
+    const $filenameField = $('.form-field.api_tester_filename_field');
+    const $resultsSection = $('.api-results');
+    const $responseTabs = $('.api-response-tabs');
+    const $responseHeader = $('.api-response-header');
+    const $responseBody = $('.api-response-body');
+    const $responseArgs = $('.api-response-args');
     const $formOverlay = $('<div class="api-tester-form-overlay"></div>');
-    $('.api-tester-form').append($formOverlay);
+
+    var presetId = $form.data('preset-id');
+    
+    // Add overlay div to form
+    $form.append($formOverlay);
 
     // Helper function to handle loading states
     function setFormLoading(isLoading, $button = null) {
@@ -105,22 +121,6 @@ jQuery(document).ready(function($){
         });
     });
 
-    // Initialize form elements
-    const $form = $('.api-tester-form');
-    const $runButton = $('.api-tester-run');
-    const $saveButton = $('.api-tester-save');
-    const $duplicateButton = $('.api-tester-duplicate');
-    const $deleteButton = $('.api-tester-delete');
-    const $streamField = $('#api_tester_stream');
-    const $filenameField = $('.form-field.api_tester_filename_field');
-
-    // Initialize Results section
-    const $resultsSection = $('.api-results');
-
-
-
-    const $responseField = $('.api-response');
-
     // Add placeholder for title input
     $('.api-tester-form .form-field input[id="api_tester_title"]').attr('placeholder', 'Enter a title');
 
@@ -191,7 +191,7 @@ jQuery(document).ready(function($){
         
         // Generate or use existing preset ID
         const currentPresetId = $form.attr('data-preset-id');
-        const presetId = currentPresetId || 'preset_' + Date.now();
+        presetId = currentPresetId || 'preset_' + Date.now();
         formData.append('preset_id', presetId);
         
         return formData;
@@ -202,16 +202,20 @@ jQuery(document).ready(function($){
         e.preventDefault();
 
         setFormLoading(true, $(this));
+        const formData = packageFormData( 'run_api_request' );
+
         $.ajax({
             url: ajaxurl,
             type: 'POST',
-            data: packageFormData( 'run_api_request' ),
+            data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
-                if (response.success) {
-                    $responseField.html(response.data.details).show();
+                if (presetId && response.success && response.data.presets && response.data.presets[presetId] && response.data.presets[presetId].responses && response.data.presets[presetId].responses[0] && response.data.presets[presetId].responses[0].timestamp) {
+                    api_tester.presets = response.data.presets;
+                    populateResponse(response.data.presets[presetId].responses[0].timestamp, false);
                 } else {
+                    populateResponse('',false);
                     console.log( response);
                     alert('Error: Check console for details');
                 }
@@ -229,18 +233,22 @@ jQuery(document).ready(function($){
     $saveButton.on('click', function(e) {
         e.preventDefault();
 
+        const formData = packageFormData( 'save_api_preset' );
+
         setFormLoading(true, $(this));
         $.ajax({
             url: ajaxurl,
             type: 'POST',
-            data: packageFormData( 'save_api_preset' ),
+            data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    const presetId = response.data.preset_id;
-                    const presetTitle = response.data.title;
-                    
+                    console.log('OLD PRESET', api_tester.presets[presetId]);
+                    api_tester.presets = response.data.presets;
+                    console.log('NEW PRESET', api_tester.presets[presetId]);
+                    const presetTitle = api_tester.presets[presetId].title;
+
                     // Update preset buttons
                     const existingButton = $(`.api-preset[data-preset-id="${presetId}"]`);
                     if (existingButton.length) {
@@ -254,9 +262,7 @@ jQuery(document).ready(function($){
                         });
                         $('.api-tester-presets').append($newButton);
                     }
-                    
-                    api_tester.presets[presetId] = response.data;
-                    update_form(presetId);
+                    update_form();
                     return;
                 } else {
                     alert('Failed to save preset: ' + response.data.message);
@@ -274,11 +280,11 @@ jQuery(document).ready(function($){
     $duplicateButton.on('click', function(e) {
         e.preventDefault();
 
-        // Generate a new preset ID
-        const newPresetId = 'preset_' + Date.now();
-        $form.attr('data-preset-id', newPresetId);
+        // Empty preset ID so a new one is created when packaging form data
+        $form.attr('data-preset-id', '');
 
-        // Set allow_incrementing_title flag
+        // Set allow_incrementing_title flag... Because this isn't a property in Operator, 
+        // it will be return empty when saved. Ensuring that this is only set when duplicating
         $('#api_tester_allow_incrementing_title').val('1');
 
         // Save the new preset
@@ -291,7 +297,7 @@ jQuery(document).ready(function($){
         if (!confirm('Are you sure you want to delete this preset?')) {
             return;
         }
-        const presetId = $form.attr('data-preset-id');
+
         if (!presetId) {
             alert('No preset selected');
             return;
@@ -308,6 +314,7 @@ jQuery(document).ready(function($){
             },
             success: function(response) {
                 if (response.success) {
+                    api_tester.presets = response.presets;
                     $(`.api-preset[data-preset-id="${presetId}"]`).remove();
                     $form.removeAttr('data-preset-id');
                     $form[0].reset();
@@ -329,37 +336,14 @@ jQuery(document).ready(function($){
     });
 
     // Update active form visuals
-    function update_active_form_visuals(presetId = '', responseTimestamp = '') {
+    function update_active_form_visuals(responseTimestamp = '') {
+        console.log('Updating active form visuals for preset ID: ' + presetId);
         $('.api-preset').removeClass('active');
         $('.api-preset[data-preset-id="' + presetId + '"]').addClass('active');
 
-        // Hide all groups
-        $('.api-results-group').hide();
+        populateResponse(responseTimestamp);
 
         if(presetId) {
-            const resultsGroupId = '.api-results-group[data-preset-id="' + presetId + '"]';
-            const $resultsGroup = $(resultsGroupId);
-            const $responseTabs = $(resultsGroupId + ' .api-response-tab');
-            const $responses = $(resultsGroupId + ' .api-response');
-
-            $resultsGroup.show();
-            $responseTabs.each(function() {
-                $(this).removeClass('active');
-            });
-            $responses.hide();
-
-            if(responseTimestamp) {
-                const $tab = $responseTabs.filter('[data-response-timestamp="' + responseTimestamp + '"]');
-                const $response = $responses.filter('[data-response-timestamp="' + responseTimestamp + '"]');
-                $tab.addClass('active');
-                $response.show();
-            } else {
-                // Show the first response
-                $responseTabs.first().addClass('active');
-                $responses.first().show();
-            }
-
-            refresh_response_tab_listeners();
             $saveButton.val('Update Preset');
             $duplicateButton.show();
             $deleteButton.show();
@@ -371,14 +355,6 @@ jQuery(document).ready(function($){
     }
     update_active_form_visuals();
 
-    function refresh_response_tab_listeners(){
-        $('.api-response-tab').off('click').on('click', function() {
-            const responseTimestamp = $(this).data('response-timestamp');
-            const presetId = $(this).closest('.api-results-group').data('preset-id');
-            update_active_form_visuals(presetId, responseTimestamp);
-        });
-    }
-
     // Reset array inputs to initial state
     function resetArrayInputs() {
         $('.array-inputs').each(function() {
@@ -389,7 +365,9 @@ jQuery(document).ready(function($){
 
     // Handle preset button clicks
     $(document).on('click', '.api-preset', function() {
-        const presetId = $(this).data('preset-id');
+        // Update the current preset ID when clicking a preset button
+        presetId = $(this).data('preset-id');
+        console.log('Selected preset ID: ' + presetId);
         if (!presetId) {
             // Clear form for new preset
             $form[0].reset();
@@ -401,10 +379,11 @@ jQuery(document).ready(function($){
         }
         
         setFormLoading(true, $(this));
-        update_form(presetId);
+        populateResponse();
+        update_form();
     });
 
-    function update_form(presetId){
+    function update_form(){
         const data = api_tester.presets[presetId];
 
         // Update form fields
@@ -528,7 +507,176 @@ jQuery(document).ready(function($){
         $streamField.trigger('change');
         $deleteButton.show();
         $form.attr('data-preset-id', presetId);
-        update_active_form_visuals(presetId);
+        update_active_form_visuals();
         setFormLoading(false);        
+    }
+
+    function populateResponse(responseTimestamp = '', autoSelectFirst = true){
+        responseTimestamp = confirmActiveResponseTimestamp(responseTimestamp);
+        console.log('populateResponse called with timestamp:', responseTimestamp);
+        // If there's not a valid response timestamp, then there are no applicable responses
+        if( ! responseTimestamp && ! autoSelectFirst){
+            console.log('No valid response timestamp found');
+            clearResponseTabs();
+            clearResponseData();
+            return;
+        }
+        populateTabs(responseTimestamp);
+        populateResponseData(responseTimestamp);
+    }
+
+    function confirmActiveResponseTimestamp(responseTimestamp = ''){
+        // Make sure we have something to work with
+        const responses = getResponsesForPreset();
+        if( ! responses.length ){
+            return null;
+        }
+
+        // If no responseTimestamp is provided, return the first valid response
+        if( ! responseTimestamp ){
+            console.log('confirmActiveResponseTimestamp: No valid response timestamp found, returning first response timestamp: ' + responses[0].timestamp);
+            return responses[0].timestamp;
+        } 
+        // If responseTimestamp is provided, check if it exists in the preset's responses
+        else {
+            const response = responses.find(response => response.timestamp === responseTimestamp);
+            if( response ){
+                // Success return the provided timestamp
+                console.log('confirmActiveResponseTimestamp: Valid response timestamp found: ' + response.timestamp);
+                return response.timestamp;
+            }
+        }
+
+        // If no valid response was found, then return null
+        console.log('confirmActiveResponseTimestamp: No valid response timestamp found');
+        return null;
+    }
+
+    function populateTabs(responseTimestamp){
+        $responseTabs.empty();
+        const responses = getResponsesForPreset();
+        if( ! responses.length ){
+            return;
+        }
+
+        // Get all responses for this preset
+        responses.forEach(response => {
+            const newTab = $('<input type="button" class="button api-response-tab" data-response-timestamp="' + response.timestamp + '" value="' + formatDateTime(response.timestamp) + '" />');
+            $responseTabs.append(newTab);
+        });
+
+        activateTab(responseTimestamp);
+    }
+
+    function getResponsesForPreset(){
+        if( ! presetId || ! api_tester.presets || ! api_tester.presets[presetId] || ! api_tester.presets[presetId].responses || ! api_tester.presets[presetId].responses.length ){
+            console.log('getResponsesForPreset: No valid responses found for preset: ' + presetId, api_tester.presets);
+            return [];
+        }
+        return api_tester.presets[presetId].responses;
+    }
+
+    // Handle response tab clicks
+    $(document).on('click', '.api-response-tab', function() {
+        populateResponseData($(this).data('response-timestamp'));
+    });
+
+    function activateTab(responseTimestamp){
+        // Remove .active from all tabs
+        $('.api-response-tab').removeClass('active');
+        // Add .active to the selected tab
+        $('.api-response-tab[data-response-timestamp="' + responseTimestamp + '"]').addClass('active');
+
+        return responseTimestamp;
+    }
+
+    function clearResponseTabs(){
+        $responseTabs.empty();
+    }
+
+    function populateResponseData(responseTimestamp){
+        clearResponseData();
+        
+        // Get all inputs inside of the response tabs
+        const responses = getResponsesForPreset();
+        const response = responses.find(response => response.timestamp === responseTimestamp);
+        if( response ){
+            // populate divs
+            $responseHeader.html('Status: ' + response.status_code);
+            $responseBody.html($('<h3>Response Body</h3>')).append(getObjectHtml(response.body));
+            $responseArgs.html($('<h3>Request Args</h3>')).append(getObjectHtml(response.args));
+        }
+    }
+
+    function getObjectHtml(obj, heading = null){
+        // Try parsing if it's a JSON string
+        if (typeof obj === 'string') {
+            try {
+                obj = JSON.parse(obj);
+            } catch (e) {
+                // If it's not valid JSON, keep it as a string
+            }
+        }
+
+        // Handle non-object values
+        if (obj === null) return $('<span>null</span>');
+        if (typeof obj !== 'object') return $('<span></span>').text(String(obj));
+
+        const table = $('<table></table>');
+        
+        // Add heading if provided
+        if (heading) {
+            table.append($('<tr><th colspan="2">' + heading + '</th></tr>'));
+        }
+
+        for (const key in obj) {
+            const row = $('<tr></tr>');
+            const keyCell = $('<td class="key"></td>').text(key);
+            const valueCell = $('<td class="value"></td>');
+            
+            let value = obj[key];
+            
+            // Try to parse string values as JSON
+            if (typeof value === 'string') {
+                try {
+                    const parsed = JSON.parse(value);
+                    if (typeof parsed === 'object' && parsed !== null) {
+                        value = parsed;
+                    }
+                } catch (e) {}
+            }
+
+            if (value === null) {
+                valueCell.text('null');
+            } else if (typeof value === 'object') {
+                // Recursively handle nested objects
+                valueCell.append(getObjectHtml(value));
+            } else {
+                valueCell.text(String(value));
+            }
+
+            row.append(keyCell, valueCell);
+            table.append(row);
+        }
+        return table;
+    }
+
+    function clearResponseData(){
+        $responseHeader.html('');
+        $responseBody.html('');
+        $responseArgs.html('');
+    } 
+
+    function formatDateTime(timestamp) {
+        const dateTime = new Date(timestamp);
+        return dateTime.toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: '2-digit'
+        }) + ' ' + dateTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
     }
 });

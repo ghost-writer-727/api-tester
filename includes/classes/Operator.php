@@ -77,7 +77,6 @@ class Operator{
 
     public function set_args( $args = [] ){
         foreach( $args as $key => $value ){
-            error_log( "$key: " . $this->get_property_type( $key ) );
 
             if( in_array( $key, $this->get_public_property_names() ) ){
                 if( $key == 'method' ){
