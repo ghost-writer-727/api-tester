@@ -603,8 +603,8 @@ jQuery(document).ready(function($){
         if( response ){
             // populate divs
             $responseHeader.html('Status: ' + response.status_code);
-            $responseBody.html($('<h3>Response Body</h3>')).append(getObjectHtml(response.body));
-            $responseArgs.html($('<h3>Request Args</h3>')).append(getObjectHtml(response.args));
+            $responseBody.html(getObjectHtml(response.body, 'Response Body'));
+            $responseArgs.html(getObjectHtml(response.args, 'Request Args'));
         }
     }
 
