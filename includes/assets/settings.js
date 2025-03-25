@@ -610,8 +610,8 @@ jQuery(document).ready(function($){
         }
 
         // Handle non-object values
-        if (obj === null) return $('<span>null</span>');
-        if (typeof obj !== 'object') return $('<span></span>').text(String(obj));
+        if (obj === null) return addCopyButton($('<span>null</span>'));
+        if (typeof obj !== 'object') return addCopyButton($('<span></span>').text(String(obj)));
 
         const table = $('<table></table>');
         
@@ -639,17 +639,34 @@ jQuery(document).ready(function($){
 
             if (value === null) {
                 valueCell.text('null');
+                addCopyButton(valueCell);
             } else if (typeof value === 'object') {
                 // Recursively handle nested objects
                 valueCell.append(getObjectHtml(value));
             } else {
                 valueCell.text(String(value));
+                addCopyButton(valueCell);
             }
 
             row.append(keyCell, valueCell);
             table.append(row);
         }
         return table;
+    }
+
+    function addCopyButton(element) {
+        const copyIcon = $('<div class="copy-icon" title="Copy to clipboard"></div>');
+        copyIcon.on('click', function() {
+            const text = element.text();
+            navigator.clipboard.writeText(text).then(() => {
+                copyIcon.addClass('copied');
+                setTimeout(() => {
+                    copyIcon.removeClass('copied');
+                }, 1500);
+            });
+        });
+        element.append(copyIcon);
+        return element;
     }
 
     function clearResponseData(){

@@ -321,7 +321,7 @@ input[type="range"]:disabled {
 }
 
 .wp-core-ui .api-tester .button.api-tester-duplicate {
-  background: #4d5abb;
+  background: #2271b1;
 }
 
 .wp-core-ui .api-tester .button.api-tester-delete {
@@ -444,6 +444,32 @@ input[type="range"]:disabled {
 
 .api-tester .api-results td.value {
   word-break: break-word;
+  position: relative;
+  padding-right: 30px;
+}
+
+.api-tester .api-results .copy-icon {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  opacity: 0.2;
+  transition: opacity 0.2s;
+  width: 16px;
+  height: 16px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 1H4C3 1 2 2 2 3v14h2V3h12V1zm3 4H8C7 5 6 6 6 7v14c0 1 1 2 2 2h11c1 0 2-1 2-2V7c0-1-1-2-2-2zm0 16H8V7h11v14z"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.api-tester .api-results .copy-icon:hover {
+  opacity: .5;
+}
+
+.api-tester .api-results .copy-icon.copied {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="green" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>');
+  opacity: 1;
 }
 
 .api-tester .api-results thead {
