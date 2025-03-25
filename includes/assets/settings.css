@@ -258,6 +258,7 @@ input[type="range"]:disabled {
 .wp-core-ui .api-tester .api-preset,
 .wp-core-ui .api-tester .api-preset.active {
   margin-right: 0;
+  padding: 8px 12px;
 }
 
 .wp-core-ui .api-tester .button:hover {
@@ -425,7 +426,7 @@ input[type="range"]:disabled {
   font-size: 0.8rem;
   color: #000;
   border: 1px #ccc solid;
-  margin: 8px 0;
+  margin-bottom: 3em;
 }
 
 .api-tester .api-results table table {
