@@ -312,12 +312,11 @@ jQuery(document).ready(function($){
             },
             success: function(response) {
                 if (response.success) {
-                    api_tester.presets = response.presets;
+                    api_tester.presets = response.data.presets;
                     $(`.api-preset[data-preset-id="${presetId}"]`).remove();
                     $form.removeAttr('data-preset-id');
                     $form[0].reset();
                     $streamField.trigger('change');
-                    $deleteButton.hide();
                     update_active_form_visuals();
                     $('html, body').animate({ scrollTop: 0 }, 'smooth');
                     setFormLoading(false);
