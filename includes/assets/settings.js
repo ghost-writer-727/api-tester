@@ -244,9 +244,7 @@ jQuery(document).ready(function($){
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    console.log('OLD PRESET', api_tester.presets[presetId]);
                     api_tester.presets = response.data.presets;
-                    console.log('NEW PRESET', api_tester.presets[presetId]);
                     const presetTitle = api_tester.presets[presetId].title;
 
                     // Update preset buttons
@@ -337,7 +335,6 @@ jQuery(document).ready(function($){
 
     // Update active form visuals
     function update_active_form_visuals(responseTimestamp = '') {
-        console.log('Updating active form visuals for preset ID: ' + presetId);
         $('.api-preset').removeClass('active');
         $('.api-preset[data-preset-id="' + presetId + '"]').addClass('active');
 
@@ -367,7 +364,6 @@ jQuery(document).ready(function($){
     $(document).on('click', '.api-preset', function() {
         // Update the current preset ID when clicking a preset button
         presetId = $(this).data('preset-id');
-        console.log('Selected preset ID: ' + presetId);
         if (!presetId) {
             // Clear form for new preset
             $form[0].reset();
@@ -513,10 +509,8 @@ jQuery(document).ready(function($){
 
     function populateResponse(responseTimestamp = '', autoSelectFirst = true){
         responseTimestamp = confirmActiveResponseTimestamp(responseTimestamp);
-        console.log('populateResponse called with timestamp:', responseTimestamp);
         // If there's not a valid response timestamp, then there are no applicable responses
         if( ! responseTimestamp && ! autoSelectFirst){
-            console.log('No valid response timestamp found');
             clearResponseTabs();
             clearResponseData();
             return;
@@ -534,7 +528,6 @@ jQuery(document).ready(function($){
 
         // If no responseTimestamp is provided, return the first valid response
         if( ! responseTimestamp ){
-            console.log('confirmActiveResponseTimestamp: No valid response timestamp found, returning first response timestamp: ' + responses[0].timestamp);
             return responses[0].timestamp;
         } 
         // If responseTimestamp is provided, check if it exists in the preset's responses
@@ -542,13 +535,11 @@ jQuery(document).ready(function($){
             const response = responses.find(response => response.timestamp === responseTimestamp);
             if( response ){
                 // Success return the provided timestamp
-                console.log('confirmActiveResponseTimestamp: Valid response timestamp found: ' + response.timestamp);
                 return response.timestamp;
             }
         }
 
         // If no valid response was found, then return null
-        console.log('confirmActiveResponseTimestamp: No valid response timestamp found');
         return null;
     }
 
@@ -578,7 +569,7 @@ jQuery(document).ready(function($){
 
     // Handle response tab clicks
     $(document).on('click', '.api-response-tab', function() {
-        populateResponseData($(this).data('response-timestamp'));
+        populateResponse($(this).data('response-timestamp'));
     });
 
     function activateTab(responseTimestamp){
