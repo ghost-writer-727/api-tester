@@ -546,7 +546,6 @@ jQuery(document).ready(function($){
     function populateTabs(responseTimestamp){
         $responseTabs.empty();
         const responses = getResponsesForPreset();
-        console.log( responses );
         if( ! responses.length ){
             return;
         }
