@@ -125,7 +125,7 @@ class Settings{
             
             // Handle different types of values
             if ($name === 'method') {
-                $methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+                $methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 foreach ($methods as $method) {
                     $html .= '<option value="' . $method . '"' . ($value === $method ? ' selected' : '') . '>' . $method . '</option>';
@@ -454,7 +454,7 @@ class Settings{
             'endpoint' => 'A common endpoint of an API request. Required field that must be a valid HTTP/HTTPS URL.',
             'route' => 'A route of an API request. Optional field that gets appended to the end of the endpoint to create a full request URL.',
             'url' => 'The target URL for the API request. Required field that must be a valid HTTP/HTTPS URL.',
-            'method' => "Request method. Accepts 'GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'TRACE', 'OPTIONS', or 'PATCH'. Some transports technically allow others, but should not be assumed. Default 'GET'.",
+            'method' => "Request method. Accepts 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'. Default 'GET'.",
             'httpversion' => "Version of the HTTP protocol to use. Accepts '1.0' and '1.1'. Default '1.0'.",
             'timeout' => 'How long the connection should stay open in seconds. Default 5.',
             'redirection' => 'Number of allowed redirects. Not supported by all transports. Default 5.',

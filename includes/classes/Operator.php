@@ -10,7 +10,7 @@ class Operator{
     public $timeout = 5.0;
     public $redirection = 5;
     public $httpversion = '1.0';
-    public $user_agent = ''; // Defaults to get_bloginfo( 'url' ) on construction
+    public $user_agent = ''; // Default set in constructor
     public $reject_unsafe_urls = false;
     public $blocking = true;
     public $headers = [
@@ -154,6 +154,21 @@ class Operator{
 
     public function post() {
         $this->method = 'POST';
+        return $this->request();
+    }
+
+    public function put() {
+        $this->method = 'PUT';
+        return $this->request();
+    }
+
+    public function delete() {
+        $this->method = 'DELETE';
+        return $this->request();
+    }
+
+    public function patch() {
+        $this->method = 'PATCH';
         return $this->request();
     }
 
