@@ -39,8 +39,8 @@ jQuery(document).ready(function($){
             <div class="array-row">
                 <input type="text" class="array-key" placeholder="Key">
                 <input type="text" class="array-value" placeholder="Value">
-                <button type="button" class="button-link array-nested" title="Create nested array">
-                    <span class="dashicons dashicons-list-view"></span>
+                <button type="button" class="button-link array-nested" title="Add child item">
+                    <span class="dashicons dashicons-plus"></span>
                 </button>
                 <button type="button" class="button-link array-remove">
                     <span class="dashicons dashicons-no-alt"></span>
@@ -146,13 +146,21 @@ jQuery(document).ready(function($){
         const $row = $(this).closest('.array-row');
         const $container = $row.closest('.array-inputs');
         const $nestedContainer = $row.closest('.nested-array-container');
+        const $parentRow = $nestedContainer.prev('.array-row');
+        const $addSibling = $nestedContainer.next('.array-add-sibling');
         
-        // If this is a nested row and it's the last one, don't remove it
-        if ($nestedContainer.length && $nestedContainer.find('.array-row').length <= 1) {
-            return;
+        // Remove the row
+        $row.remove();
+        
+        // If this was the last row in a nested container, remove the container and sibling button
+        if ($nestedContainer.length && $nestedContainer.find('.array-row').length === 0) {
+            $nestedContainer.remove();
+            $addSibling.remove();
+            if ($parentRow.length) {
+                $parentRow.removeClass('has-children');
+            }
         }
         
-        $row.remove();
         updateArrayField($container);
     });
 
@@ -165,29 +173,16 @@ jQuery(document).ready(function($){
     $(document).on('click', '.array-nested', function(e) {
         e.preventDefault();
         const $row = $(this).closest('.array-row');
-        const $value = $row.find('> .array-value');
         const $container = $row.closest('.array-inputs');
         
-        if (!$row.find('> .nested-array-container').length) {
-            // Convert to nested array
-            $value.hide();
-            const $nestedContainer = $('<div class="nested-array-container"></div>');
-            const $addButton = $('<button type="button" class="button array-add">Add Item</button>');
-            
-            // Create initial nested row
-            const $initialRow = createArrayRow(true);
-            $initialRow.find('.array-remove').addClass('disabled');
-            $nestedContainer.append($initialRow);
-            $nestedContainer.append($addButton);
-            $row.append($nestedContainer);
-            $(this).addClass('active');
-        } else {
-            // Convert back to regular value
-            const $nestedContainer = $row.find('> .nested-array-container');
-            $value.show();
-            $nestedContainer.remove();
-            $(this).removeClass('active');
-        }
+        // Always create a new nested container after the current row
+        const $nestedContainer = $('<div class="nested-array-container"></div>');
+        const $initialRow = createArrayRow(true);
+        $nestedContainer.append($initialRow);
+        
+        // Insert after the current row
+        $row.after($nestedContainer);
+        $row.addClass('has-children');
         
         updateArrayField($container);
     });
@@ -432,7 +427,8 @@ jQuery(document).ready(function($){
     // Reset array inputs to initial state
     function resetArrayInputs() {
         $('.array-inputs').each(function() {
-            $(this).find('.array-row').remove();
+            // Remove all array rows, nested containers, and their contents
+            $(this).find('.array-row, .nested-array-container').remove();
             $(this).find('input[type="hidden"]').val('{}');
         });
     }
@@ -482,6 +478,12 @@ jQuery(document).ready(function($){
         $form.find('input[type="range"]').each(function() {
             $(this).val($(this).attr('min'));
             $(this).trigger('input');
+        });
+        
+        // Clear all array fields
+        $('.array-inputs').each(function() {
+            $(this).find('.array-row, .nested-array-container').remove();
+            $(this).find('input[type="hidden"]').val('{}');
         });
 
         // Handle unlimited size first to ensure proper range state

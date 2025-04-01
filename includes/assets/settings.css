@@ -126,36 +126,77 @@
   flex-direction: column;
   gap: 0.5em;
   width: 100%;
+  max-width: 800px;
 }
 
 .array-row {
   display: flex;
   gap: 0.5em;
   align-items: center;
-  width: 100%;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.array-row:hover {
+  background: rgba(0,0,0,0.03);
 }
 
 .array-row .array-key,
 .array-row .array-value {
-  background: #eee;
-  padding: 3px 15px;
-  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 3px;
+  width: 200px;
 }
 
-.array-row.active {
-  width: 100%;
+.array-row .array-key {
+  width: 150px;
 }
 
-.array-row:not(.active) .array-key,
-.array-row:not(.active) .array-value {
-  flex: 0.5;
+.array-row .array-value {
+  width: 250px;
+}
+
+.array-row .array-add,
+.array-row .array-remove {
+  padding: 4px 8px;
+  border-radius: 3px;
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  color: #666;
+}
+
+.array-row .array-add:hover,
+.array-row .array-remove:hover {
+  background: #f0f0f0;
 }
 
 .nested-array-container {
-  padding-left: 20px;
-  margin-top: 0.5em;
-  border-left: 2px solid #ddd;
-  width: 100%;
+  margin-left: 24px;
+  padding-left: 12px;
+  border-left: 2px solid #eee;
+}
+
+
+
+/* Vertical lines connecting parent to children */
+.array-row.has-children::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 100%;
+  height: 12px;
+  width: 2px;
+  background: #eee;
+}
+
+/* Add some spacing between groups */
+.array-row + .nested-array-container {
+  margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 /* Range slider styling */
