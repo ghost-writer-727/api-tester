@@ -75,6 +75,22 @@
   border-style: none;
 }
 
+.api-tester-form .form-field input[type="text"]::placeholder,
+.api-tester-form .form-field input[type="number"]::placeholder,
+.api-tester-form .form-field select::placeholder,
+.api-tester-form .form-field textarea::placeholder,
+.api-tester-form .form-field .input-wrapper::placeholder {
+  color: #2c333822;
+}
+
+.api-tester-form .form-field select,
+.api-tester-form .form-field select:active,
+.api-tester-form .form-field select:focus{
+  box-shadow: 0 0 0 1px #eee;
+  color: #2c3338;
+  max-width: fit-content;
+}
+
 .api-tester-form .form-field.api_tester_title_field {
   margin-top: 0;
 }

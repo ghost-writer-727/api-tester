@@ -7,7 +7,6 @@ jQuery(document).ready(function($){
     const $deleteButton = $('.api-tester-delete');
     const $streamField = $('#api_tester_stream');
     const $filenameField = $('.form-field.api_tester_filename_field');
-    const $resultsSection = $('.api-results');
     const $responseTabs = $('.api-response-tabs');
     const $responseHeader = $('.api-response-header');
     const $responseBody = $('.api-response-body');

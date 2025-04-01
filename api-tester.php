@@ -48,5 +48,14 @@ class Main{
     }
 }
 
+add_filter( 'api_tester_custom_encoders', function( $encoders ){
+    $encoders['4over'] = '4Over';
+    return $encoders;
+}, 10, 1);
+
+add_filter( 'api_tester_encode_4over', function( $encodable, $operator ){
+    return hash_hmac("sha256", $operator->method, hash("sha256", $encodable));
+}, 10, 2);
+
 // Initialize plugin
 Main::get_instance();

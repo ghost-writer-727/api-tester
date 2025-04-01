@@ -131,10 +131,31 @@ class Settings{
                     $html .= '<option value="' . $method . '"' . ($value === $method ? ' selected' : '') . '>' . $method . '</option>';
                 }
                 $html .= '</select>';
-            } elseif( $name === 'body_format' ){
+            } elseif( $name === 'content_type' ){
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
-                $html .= '<option value="json"' . ($value === 'json' ? ' selected' : '') . '>JSON</option>';
-                $html .= '<option value="array"' . ($value === 'array' ? ' selected' : '') . '>Array</option>';
+                $html .= '<option value="application/json"' . ($value === 'application/json' ? ' selected' : '') . '>JSON</option>';
+                $html .= '<option value="application/x-www-form-urlencoded"' . ($value === 'application/x-www-form-urlencoded' ? ' selected' : '') . '>URL Encoded</option>';
+                $html .= '<option value="text/plain"' . ($value === 'text/plain' ? ' selected' : '') . '>Text</option>';
+                $html .= '</select>';
+            } elseif ($name === 'accept') {
+                $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
+                $html .= '<option value="application/json"' . ($value === 'application/json' ? ' selected' : '') . '>JSON</option>';
+                $html .= '<option value="application/x-www-form-urlencoded"' . ($value === 'application/x-www-form-urlencoded' ? ' selected' : '') . '>URL Encoded</option>';
+                $html .= '<option value="text/plain"' . ($value === 'text/plain' ? ' selected' : '') . '>Text</option>';
+                $html .= '</select>';
+            } elseif( $name === 'cache_control' ){
+                $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
+                $html .= '<option value=""' . ($value === '' ? ' selected' : '') . '>Default</option>';
+                $html .= '<option value="no-cache"' . ($value === 'no-cache' ? ' selected' : '') . '>No Cache</option>';
+                $html .= '</select>';
+            } elseif( $name === 'authorization' ){
+                $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr($value) . '" class="woocommerce-input-wrap" placeholder="Bearer {encodable_text}"/>';
+            } elseif( $name === 'encoding_type' ){
+                $html .= '<select id="encoding_type" name="' . esc_attr($name) . '" class="inline-select">';
+                $html .= '<option value=""' . ($value === '' ? ' selected' : '') . '>None</option>';
+                foreach( Operator::get_encoders() as $key => $name ){
+                    $html .= '<option value="' . esc_attr($key) . '"' . ($value === $key ? ' selected' : '') . '>' . esc_html($name) . '</option>';
+                }
                 $html .= '</select>';
             } elseif ($name === 'httpversion') {
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
@@ -205,69 +226,6 @@ class Settings{
         $html .= '<div class="api-response-body"></div> <!-- End Response Body -->';
         $html .= '<div class="api-response-args"></div>';
         $html .= '</div> <!-- End API Results -->';
-        return $html;
-        $html = '<div class="api-results">';
-        
-        foreach( $this->presets as $preset_id => $preset ){
-            // If a preset id is specified, only show that preset
-            if( $preset_id !== null and $preset_id !== $preset_id ){
-                continue;
-            }
-
-            // If there are no responses, skip this preset
-            if( ! isset( $preset['responses'] ) || empty( $preset['responses'] )){
-                continue;
-            }
-            
-            // Create a div for the preset
-            $html .= '<div class="api-results-group" data-preset-id="' . esc_attr($preset_id) . '">';
-
-            // Hold all the response tabs for each id in it's own div
-            $html .= '<div class="api-response-tabs">';
-            foreach( $preset['responses'] as $key => $response){
-                // If a response timestamp is specified, only show that response
-                if( $response_timestamp !== null and $response_timestamp !== $response['timestamp'] ){
-                    continue;
-                }
-                $html .= $this->get_response_tab($key, $response);
-            }
-            $html .= '</div> <!-- End Response Tabs -->';
-
-            // Hold all the responses for each id in it's own div
-            $html .= '<div class="api-responses">';
-            foreach( $preset['responses'] as $response ){
-                // If a response timestamp is specified, only show that response
-                if( $response_timestamp !== null and $response_timestamp !== $response['timestamp'] ){
-                    continue;
-                }
-                // We use the timestamp as the response id, so it is required.
-                if( ! isset( $response['timestamp'] )){
-                    continue;
-                }
-                // Create a div with class api-response
-                $html .= '<div class="api-response" data-preset-id="' . esc_attr($preset_id) . '" data-response-timestamp="' . esc_attr($response['timestamp']) . '">';
-                
-                // Create section header with the status code and date
-                $html .= '<div class="api-response-header">' . $this->get_response_header($response) . '</div>';
-
-                // Create a section for the response body
-                // $html .= '<p class="api-response-show-response show-hide-wrapper" data-show-hide="api-response-body" data-show-hide-group="api-response"><span class="show-hide-toggle">Hide</span> Response Body</p>';
-                $html .= '<div class="api-response-body">' . $this->get_response_body($response) . '</div>';
-
-                // Create a section for the args
-                // $html .= '<p class="api-response-show-args show-hide-wrapper" data-show-hide="api-response-args" data-show-hide-group="api-response"><span class="show-hide-toggle">Show</span> Request Args</p>';
-                $html .= '<div class="api-response-args" style="display: none;">' . $this->get_response_args($response) . '</div>';
-
-                // Create a section for full details
-                // $html .= '<p class="api-response-show-details show-hide-wrapper" data-show-hide="api-response-details" data-show-hide-group="api-response"><span class="show-hide-toggle">Show</span> Full Details</p>';
-                $html .= '<div class="api-response-details" style="display: none;">' . $this->get_response_details($response) . '</div>';
-
-                $html .= '</div> <!-- End Response ID: ' . esc_attr($response['timestamp']) . ' -->';
-            }
-            $html .= '</div> <!-- End Responses -->';
-            $html .= '</div> <!-- End Results Group for Preset ID: ' . esc_attr($preset_id) . ' -->';
-        }
-        $html .= '</div> <!-- End Results -->';
         return $html;
     }
 
@@ -459,9 +417,13 @@ class Settings{
             'httpversion' => "Version of the HTTP protocol to use. Accepts '1.0' and '1.1'. Default '1.0'.",
             'timeout' => 'How long the connection should stay open in seconds. Default 5.',
             'redirection' => 'Number of allowed redirects. Not supported by all transports. Default 5.',
+            'content_type' => "Content type of the request. Default 'JSON'. Will override any existing Content-Type header if set below.",
+            'accept' => "Accept header to send with the request. Default 'JSON'. Will override any existing Accept header if set below.",
+            'authorization' => "Authorization header to send with the request. Default empty. Anything within curly braces will be encoded. Will override any existing Authorization header if set below.",
+            'encoding_type' => "This method will be used to encode any strings inside of curly braces within the authorization header. Default 'base64'.",
+            'cache_control' => "Cache-Control header to send with the request. Default 'no-cache'. Will override any existing Cache-Control header if set below.",
             'headers' => "Array or string of headers to send with the request. Default empty array.",
             'body' => "Body to send with the request. Default null.",
-            'body_format' => "Format the body before sending the request. Accepts 'json' or 'array'. Default 'json'.",
             'cookies' => "List of cookies to send with the request. Default empty array.",
             'stream' => "Whether to stream to a file. If set to true and no filename was given, it will be dropped it in the WP temp dir and its name will be set using the basename of the URL. Default false.",
             'filename' => "Filename of the file to write to when streaming. Stream must be set to true. Default null.",

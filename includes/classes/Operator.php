@@ -13,14 +13,16 @@ class Operator{
     public $user_agent = ''; // Default set in constructor
     public $reject_unsafe_urls = false;
     public $blocking = true;
-    public $headers = [
-        'Accept' => 'application/json',
-        'Content-Type' => 'application/json',
-        'Authorization' => ''
-    ];
+    public $content_type = 'application/json';
+    public $accept = 'application/json';
+    public $authorization = '';
+    public $encoding_type = 'base64';
+    public $x_auth_token = '';
+    public $x_auth_type = '';
+    public $cache_control = 'no-cache';
+    public $headers = [];
     public $cookies = [];
     public $body = [];
-    public $body_format = 'json'; // 'json','array'
     public $compress = false;
     public $decompress = true;
     public $sslverify = true;
@@ -44,7 +46,7 @@ class Operator{
         $this->set_args( $args );
     }
 
-    public function get_public_property_names(){
+    public static function get_public_property_names(){
         return [
             'title',
             'description',
@@ -57,10 +59,14 @@ class Operator{
             'user_agent',
             'reject_unsafe_urls',
             'blocking',
+            'authorization',
+            'encoding_type',
+            'content_type',
+            'cache_control',
+            'accept',
             'headers',
             'cookies',
             'body',
-            'body_format',
             'compress',
             'decompress',
             'sslverify',
@@ -69,6 +75,13 @@ class Operator{
             'filename',
             'limit_response_size',
         ];
+    }
+
+    public static function get_encoders(){
+        return apply_filters( 'api_tester_custom_encoders', [
+            'base64' => 'Base64',
+            'md5' => 'MD5',
+        ] );
     }
 
     public function get_property_type( $property_name ){
@@ -114,14 +127,6 @@ class Operator{
 
                 // Exceptions/Overrides
                 switch( $key ){
-                    case 'body':
-                        if( empty( $value ) ){
-                            $this->$key = null;
-                        } else if( $this->body_format == 'json' && is_array( $value ) ){
-                            $this->$key = json_encode( $value );
-                        }
-                        // Otherwise it's already been set as an array
-                        break;
                     case 'stream':
                         if( empty( $value ) ){
                             $this->filename = null;
@@ -137,12 +142,26 @@ class Operator{
         }
     }
 
-    public function get_args(){
+    public function get_args( $prep_for_request = false ){
         $args = [];
         foreach( $this->get_public_property_names() as $arg ){
             if( isset( $this->$arg ) ){
                 $args[$arg] = $this->$arg;
             }
+        }
+
+        if( $prep_for_request ){
+            // Remove certain args as they aren't supported by wp_remote_request $args
+            if( isset( $args['title'] ) ) unset( $args['title'] );
+            if( isset( $args['description'] ) ) unset( $args['description'] );
+            if( isset( $args['endpoint'] ) ) unset( $args['endpoint'] );
+            if( isset( $args['route'] ) ) unset( $args['route'] );
+            
+            $args['headers'] = $this->prepare_headers() ?: [];
+            if( isset( $args['body'] )  && $args['body'] ) $args['body'] = $this->prepare_body();
+            
+            $args['method'] = $this->method; // Ensure method is uppercase
+            dap( $args );
         }
         return $args;
     }
@@ -174,16 +193,8 @@ class Operator{
 
     public function request() {
         $url = $this->endpoint . $this->route;
-        $args = $this->get_args();
+        $args = $this->get_args(true);
         
-        // Remove certain args as they aren't supported by wp_remote_request $args
-        if( isset( $args['title'] ) ) unset( $args['title'] );
-        if( isset( $args['description'] ) ) unset( $args['description'] );
-        if( isset( $args['endpoint'] ) ) unset( $args['endpoint'] );
-        if( isset( $args['route'] ) ) unset( $args['route'] );
-        if( isset( $args['body_format'] ) ) unset( $args['body_format'] );
-        
-        $args['method'] = $this->method; // Ensure method is uppercase
         $this->response = wp_remote_request($url, $args);
 
         return $this->process_response();
@@ -225,5 +236,91 @@ class Operator{
 
     public function get_error() {
         return $this->error;
+    }
+
+    private function prepare_headers(){
+        $headers = $this->headers;
+        if( is_array( $headers ) ){
+
+            if( $this->body && $this->content_type){
+                $headers['Content-Type'] = $this->content_type;
+            } else {
+                unset( $headers['Content-Type'] );
+            }
+            
+            if( $this->authorization && $authorization = $this->prepare_authorization() ){
+                $headers['Authorization'] = $authorization;
+            } else {
+                unset( $headers['Authorization'] );
+            }
+
+            if( $this->cache_control ){
+                $headers['Cache-Control'] = $this->cache_control;
+            } else {
+                unset( $headers['Cache-Control'] );
+            }
+
+            if( $this->accept ){
+                $headers['Accept'] = $this->accept;
+            } else {
+                unset( $headers['Accept'] );
+            }
+
+            $headers = array_map( 'sanitize_text_field', $headers );
+        }
+        return $headers;
+    }
+
+    private function prepare_authorization(){
+        if( $this->authorization && array_key_exists( $this->encoding_type, $this->get_encoders()) ){
+            $authorization = $this->authorization;
+            if( $this->encoding_type ){
+                $encodables = $this->get_encodables();
+                foreach( $encodables as $encodable ){
+                    $variable = str_replace( '{', '', str_replace( '}', '', $encodable ) );
+                    switch( $this->encoding_type ){
+                        case 'base64':
+                            $authorization = str_replace( $encodable, base64_encode( $variable ), $authorization );
+                            break;
+                        case 'md5':
+                            $authorization = str_replace( $encodable, md5( $variable ), $authorization );
+                            break;
+                        default:
+                            $custom_encoding = apply_filters( 'api_tester_encode_' . $this->encoding_type, $variable, $this );
+                            $authorization = str_replace( $encodable, $custom_encoding, $authorization );
+                            break;
+                    }
+                }
+            }
+            return $authorization;
+        }
+        return null;
+    }
+
+    private function get_encodables(){
+        // return an array of all strings within curly braces.
+        preg_match_all('/\{[^}]+\}/', $this->authorization, $matches);
+        return $matches[0];
+    }
+
+    private function prepare_body(){
+        $body = null;
+        if( $this->body ){
+            switch( $this->content_type ){
+                case 'application/json':
+                    $body = json_encode( $this->body );
+                    break;
+                case 'application/x-www-form-urlencoded': // wp_remote_request() will url-encode this for us
+                    $body = $this->body;
+                    break;
+                case 'text/plain':
+                default:
+                    if( is_string( $this->body ) ){
+                        $body = sanitize_text_field( $this->body );
+                    }
+                    break;
+            }
+        }
+        return $body;
     }
 }
