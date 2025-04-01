@@ -35,11 +35,15 @@ jQuery(document).ready(function($){
         }
     }
     // Helper functions for array inputs
-    function createArrayRow() {
+    function createArrayRow(isNested = false) {
         return $(`
             <div class="array-row">
                 <input type="text" class="array-key" placeholder="Key">
                 <input type="text" class="array-value" placeholder="Value">
+                ${!isNested ? `
+                <button type="button" class="button-link array-nested" title="Create nested array">
+                    <span class="dashicons dashicons-list-view"></span>
+                </button>` : ''}
                 <button type="button" class="button-link array-remove">
                     <span class="dashicons dashicons-no-alt"></span>
                 </button>
@@ -53,12 +57,32 @@ jQuery(document).ready(function($){
         const $hidden = $container.closest('form').find(`input[name="${fieldName}"]`);
         const data = {};
 
-        $container.find('.array-row').each(function() {
-            const key = $(this).find('.array-key').val();
-            const value = $(this).find('.array-value').val();
+        function processRow($row) {
+            const key = $row.find('> .array-key').val();
+            const $value = $row.find('> .array-value');
+            const $nestedContainer = $row.find('> .nested-array-container');
+            
             if (key && key.trim()) {
-                data[key.trim()] = value || '';
+                if ($nestedContainer.length) {
+                    // Process nested array
+                    const nestedData = {};
+                    $nestedContainer.find('> .array-row').each(function() {
+                        const nestedKey = $(this).find('> .array-key').val();
+                        const nestedValue = $(this).find('> .array-value').val();
+                        if (nestedKey && nestedKey.trim()) {
+                            nestedData[nestedKey.trim()] = nestedValue || '';
+                        }
+                    });
+                    data[key.trim()] = nestedData;
+                } else {
+                    // Regular key-value pair
+                    data[key.trim()] = $value.val() || '';
+                }
             }
+        }
+
+        $container.find('> .array-row').each(function() {
+            processRow($(this));
         });
 
         if ($hidden.length === 0) {
@@ -68,6 +92,16 @@ jQuery(document).ready(function($){
 
         const jsonStr = JSON.stringify(data);
         $hidden.val(jsonStr).trigger('change');
+
+        // Update remove button states for nested rows
+        $container.find('.nested-array-container').each(function() {
+            const $nestedRows = $(this).find('> .array-row');
+            if ($nestedRows.length === 1) {
+                $nestedRows.find('> .array-remove').addClass('disabled');
+            } else {
+                $nestedRows.find('> .array-remove').removeClass('disabled');
+            }
+        });
     }
 
     // Handle array inputs
@@ -97,20 +131,60 @@ jQuery(document).ready(function($){
     $(document).on('click', '.array-add', function(e) {
         e.preventDefault();
         const $container = $(this).closest('.array-inputs');
-        const $row = createArrayRow();
+        const isNested = $(this).closest('.nested-array-container').length > 0;
+        const $row = createArrayRow(isNested);
         $(this).before($row);
         updateArrayField($container);
     });
 
     $(document).on('click', '.array-remove', function(e) {
         e.preventDefault();
-        const $container = $(this).closest('.array-inputs');
-        $(this).closest('.array-row').remove();
+        const $row = $(this).closest('.array-row');
+        const $container = $row.closest('.array-inputs');
+        const $nestedContainer = $row.closest('.nested-array-container');
+        
+        // If this is a nested row and it's the last one, don't remove it
+        if ($nestedContainer.length && $nestedContainer.find('.array-row').length <= 1) {
+            return;
+        }
+        
+        $row.remove();
         updateArrayField($container);
     });
 
     $(document).on('change keyup', '.array-key, .array-value', function() {
         const $container = $(this).closest('.array-inputs');
+        updateArrayField($container);
+    });
+
+    // Handle nested array button click
+    $(document).on('click', '.array-nested', function(e) {
+        e.preventDefault();
+        const $row = $(this).closest('.array-row');
+        const $value = $row.find('> .array-value');
+        const $container = $row.closest('.array-inputs');
+        
+        if (!$row.find('> .nested-array-container').length) {
+            // Convert to nested array
+            $value.hide();
+            const $nestedContainer = $('<div class="nested-array-container"></div>');
+            const $addButton = $('<button type="button" class="button array-add">Add Item</button>');
+            
+            // Create initial nested row
+            const $initialRow = createArrayRow(true);
+            $initialRow.find('.array-remove').addClass('disabled');
+            $nestedContainer.append($initialRow);
+            $nestedContainer.append($addButton);
+            $row.append($nestedContainer);
+            $(this).addClass('active');
+        } else {
+            // Convert back to regular value
+            const $nestedContainer = $row.find('> .nested-array-container');
+            $value.show();
+            $nestedContainer.remove();
+            $(this).removeClass('active');
+        }
+        
         updateArrayField($container);
     });
 

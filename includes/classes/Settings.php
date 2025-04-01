@@ -164,6 +164,7 @@ class Settings{
                         $html .= '<span class="array-row">';
                         $html .= '<input type="text" class="array-key" value="' . esc_attr($k) . '" placeholder="Key">';
                         $html .= '<input type="text" class="array-value" value="' . esc_attr($v) . '" placeholder="Value">';
+                        $html .= '<button type="button" class="button-link array-nested" title="Create nested array"><span class="dashicons dashicons-list-view"></span></button>';
                         $html .= '<button type="button" class="button-link array-remove"><span class="dashicons dashicons-no-alt"></span></button>';
                         $html .= '</span>';
                     }
