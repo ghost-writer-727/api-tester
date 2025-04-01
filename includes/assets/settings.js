@@ -39,10 +39,9 @@ jQuery(document).ready(function($){
             <div class="array-row">
                 <input type="text" class="array-key" placeholder="Key">
                 <input type="text" class="array-value" placeholder="Value">
-                ${!isNested ? `
                 <button type="button" class="button-link array-nested" title="Create nested array">
                     <span class="dashicons dashicons-list-view"></span>
-                </button>` : ''}
+                </button>
                 <button type="button" class="button-link array-remove">
                     <span class="dashicons dashicons-no-alt"></span>
                 </button>
@@ -63,25 +62,31 @@ jQuery(document).ready(function($){
             
             if (key && key.trim()) {
                 if ($nestedContainer.length) {
-                    // Process nested array
+                    // Process nested array recursively
                     const nestedData = {};
                     $nestedContainer.find('> .array-row').each(function() {
-                        const nestedKey = $(this).find('> .array-key').val();
-                        const nestedValue = $(this).find('> .array-value').val();
-                        if (nestedKey && nestedKey.trim()) {
-                            nestedData[nestedKey.trim()] = nestedValue || '';
+                        // Recursively process each nested row
+                        const result = processRow($(this));
+                        if (result) {
+                            Object.assign(nestedData, result);
                         }
                     });
-                    data[key.trim()] = nestedData;
+                    const trimmedKey = key.trim();
+                    return { [trimmedKey]: nestedData };
                 } else {
                     // Regular key-value pair
-                    data[key.trim()] = $value.val() || '';
+                    const trimmedKey = key.trim();
+                    return { [trimmedKey]: $value.val() || '' };
                 }
             }
+            return null;
         }
 
         $container.find('> .array-row').each(function() {
-            processRow($(this));
+            const result = processRow($(this));
+            if (result) {
+                Object.assign(data, result);
+            }
         });
 
         if ($hidden.length === 0) {
@@ -431,6 +436,23 @@ jQuery(document).ready(function($){
             $(this).find('input[type="hidden"]').val('{}');
         });
     }
+
+    // Handle array input focus/blur
+    $(document).on('focus', '.array-key, .array-value', function() {
+        const $row = $(this).closest('.array-row');
+        $('.array-row').removeClass('active');
+        $row.addClass('active');
+    });
+
+    $(document).on('blur', '.array-key, .array-value', function() {
+        // Small delay to allow for focus on other inputs in the same row
+        setTimeout(() => {
+            const $row = $(this).closest('.array-row');
+            if (!$row.find(':focus').length) {
+                $row.removeClass('active');
+            }
+        }, 100);
+    });
 
     // Handle preset button clicks
     $(document).on('click', '.api-preset', function() {

@@ -132,12 +132,30 @@
   display: flex;
   gap: 0.5em;
   align-items: center;
+  width: 100%;
 }
 
 .array-row .array-key,
 .array-row .array-value {
   background: #eee;
   padding: 3px 15px;
+  flex: 1;
+}
+
+.array-row.active {
+  width: 100%;
+}
+
+.array-row:not(.active) .array-key,
+.array-row:not(.active) .array-value {
+  flex: 0.5;
+}
+
+.nested-array-container {
+  padding-left: 20px;
+  margin-top: 0.5em;
+  border-left: 2px solid #ddd;
+  width: 100%;
 }
 
 /* Range slider styling */
