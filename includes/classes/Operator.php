@@ -16,10 +16,10 @@ class Operator{
     public $content_type = 'application/json';
     public $accept = 'application/json';
     public $authorization = '';
-    public $encoding_type = 'base64';
+    public $encoding_type = '';
     public $x_auth_token = '';
     public $x_auth_type = '';
-    public $cache_control = 'no-cache';
+    public $cache_control = '';
     public $headers = [];
     public $cookies = [];
     public $body = [];
@@ -158,10 +158,14 @@ class Operator{
             if( isset( $args['route'] ) ) unset( $args['route'] );
             
             $args['headers'] = $this->prepare_headers() ?: [];
+            if( isset( $args['authorization'] ) ) unset( $args['authorization'] );
+            if( isset( $args['encoding_type'] ) ) unset( $args['encoding_type'] );
+            if( isset( $args['content_type'] ) ) unset( $args['content_type'] );
+            if( isset( $args['cache_control'] ) ) unset( $args['cache_control'] );
+            if( isset( $args['accept'] ) ) unset( $args['accept'] );
             if( isset( $args['body'] )  && $args['body'] ) $args['body'] = $this->prepare_body();
             
             $args['method'] = $this->method; // Ensure method is uppercase
-            dap( $args );
         }
         return $args;
     }
@@ -272,24 +276,22 @@ class Operator{
     }
 
     private function prepare_authorization(){
-        if( $this->authorization && array_key_exists( $this->encoding_type, $this->get_encoders()) ){
+        if( $this->authorization && ( ! $this->encoding_type || array_key_exists( $this->encoding_type, $this->get_encoders()) ) ){
             $authorization = $this->authorization;
-            if( $this->encoding_type ){
-                $encodables = $this->get_encodables();
-                foreach( $encodables as $encodable ){
-                    $variable = str_replace( '{', '', str_replace( '}', '', $encodable ) );
-                    switch( $this->encoding_type ){
-                        case 'base64':
-                            $authorization = str_replace( $encodable, base64_encode( $variable ), $authorization );
-                            break;
-                        case 'md5':
-                            $authorization = str_replace( $encodable, md5( $variable ), $authorization );
-                            break;
-                        default:
-                            $custom_encoding = apply_filters( 'api_tester_encode_' . $this->encoding_type, $variable, $this );
-                            $authorization = str_replace( $encodable, $custom_encoding, $authorization );
-                            break;
-                    }
+            $encodables = $this->get_encodables();
+            foreach( $encodables as $encodable ){
+                $variable = str_replace( '{', '', str_replace( '}', '', $encodable ) );
+                switch( $this->encoding_type ){
+                    case 'base64':
+                        $authorization = str_replace( $encodable, base64_encode( $variable ), $authorization );
+                        break;
+                    case 'md5':
+                        $authorization = str_replace( $encodable, md5( $variable ), $authorization );
+                        break;
+                    default:
+                        $custom_encoding = apply_filters( 'api_tester_encode_' . $this->encoding_type, $variable, $this );
+                        $authorization = str_replace( $encodable, $custom_encoding, $authorization );
+                        break;
                 }
             }
             return $authorization;

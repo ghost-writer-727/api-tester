@@ -491,6 +491,9 @@ jQuery(document).ready(function($){
                         $display.text(value);
                     }
                 }
+            } else if ($field.is('select')) {
+                // For select elements, we need to set the value and trigger change
+                $field.val(value).trigger('change');
             } else {
                 // Try to unescape string values for text fields
                 if (typeof value === 'string') {
