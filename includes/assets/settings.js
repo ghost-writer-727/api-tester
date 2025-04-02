@@ -121,9 +121,47 @@ jQuery(document).ready(function($){
             });
         } else {
             result = {};
+            // First pass: collect all keys to detect duplicates
+            const keyMap = {};
+            $container.find('> .array-row').each(function() {
+                const $row = $(this);
+                const key = $row.find('> .array-key').val().trim();
+                if (key) {
+                    if (keyMap[key]) {
+                        keyMap[key].push($row);
+                    } else {
+                        keyMap[key] = [$row];
+                    }
+                }
+            });
+            
+            // Highlight duplicate keys with red outlines
+            for (const key in keyMap) {
+                if (keyMap[key].length > 1) {
+                    // All rows except the last one will be overridden
+                    keyMap[key].forEach(($row, index) => {
+                        const $keyInput = $row.find('> .array-key');
+                        if (index < keyMap[key].length - 1) {
+                            // This key will be overridden - highlight in red
+                            $keyInput.css('outline', '2px solid red');
+                            $keyInput.attr('title', 'Warning: This key will be overridden by another key with the same name');
+                        } else {
+                            // This is the key that will be used
+                            $keyInput.css('outline', '');
+                            $keyInput.attr('title', 'This key will override previous keys with the same name');
+                        }
+                    });
+                } else {
+                    // No duplicate, remove any existing highlight
+                    keyMap[key][0].find('> .array-key').css('outline', '').removeAttr('title');
+                }
+            }
+            
+            // Second pass: build the result object
             $container.find('> .array-row').each(function() {
                 const processed = processRow($(this));
                 if (processed) {
+                    // Object.assign will naturally override duplicate keys with the latest value
                     Object.assign(result, processed);
                 }
             });
@@ -160,9 +198,48 @@ jQuery(document).ready(function($){
                 } else {
                     // Handle as object - keep keys
                     const nestedObj = {};
+                    
+                    // First pass: collect all keys to detect duplicates
+                    const keyMap = {};
+                    $nestedContainer.find('> .array-row').each(function() {
+                        const $row = $(this);
+                        const key = $row.find('> .array-key').val().trim();
+                        if (key) {
+                            if (keyMap[key]) {
+                                keyMap[key].push($row);
+                            } else {
+                                keyMap[key] = [$row];
+                            }
+                        }
+                    });
+                    
+                    // Highlight duplicate keys with red outlines
+                    for (const key in keyMap) {
+                        if (keyMap[key].length > 1) {
+                            // All rows except the last one will be overridden
+                            keyMap[key].forEach(($row, index) => {
+                                const $keyInput = $row.find('> .array-key');
+                                if (index < keyMap[key].length - 1) {
+                                    // This key will be overridden - highlight in red
+                                    $keyInput.css('outline', '2px solid red');
+                                    $keyInput.attr('title', 'Warning: This key will be overridden by another key with the same name');
+                                } else {
+                                    // This is the key that will be used
+                                    $keyInput.css('outline', '');
+                                    $keyInput.attr('title', 'This key will override previous keys with the same name');
+                                }
+                            });
+                        } else {
+                            // No duplicate, remove any existing highlight
+                            keyMap[key][0].find('> .array-key').css('outline', '').removeAttr('title');
+                        }
+                    }
+                    
+                    // Second pass: build the result object
                     $nestedContainer.find('> .array-row').each(function() {
                         const result = processRow($(this));
                         if (result) {
+                            // Object.assign will naturally override duplicate keys with the latest value
                             Object.assign(nestedObj, result);
                         }
                     });
@@ -171,8 +248,10 @@ jQuery(document).ready(function($){
             } else {
                 // Regular key-value pair
                 const trimmedKey = key.trim();
+                // If key is empty, generate a unique key to prevent issues
+                const finalKey = trimmedKey || `item_${Math.floor(Math.random() * 10000)}`;
                 const trimmedValue = $value.val().trim();
-                return trimmedValue || trimmedKey ? { [trimmedKey]: trimmedValue } : null;
+                return trimmedValue || finalKey ? { [finalKey]: trimmedValue } : null;
             }
         }
 
@@ -225,6 +304,23 @@ jQuery(document).ready(function($){
         const $container = $(this).closest('.array-inputs');
         updateArrayField($container);
     });
+    
+    // Add tooltip styling for better visibility
+    $('<style>\n' +
+        '[title] { position: relative; }\n' +
+        '[title]:hover::after {\n' +
+        '  content: attr(title);\n' +
+        '  position: absolute;\n' +
+        '  bottom: 100%;\n' +
+        '  left: 0;\n' +
+        '  background: rgba(0, 0, 0, 0.8);\n' +
+        '  color: white;\n' +
+        '  padding: 5px 10px;\n' +
+        '  border-radius: 3px;\n' +
+        '  white-space: nowrap;\n' +
+        '  z-index: 10000;\n' +
+        '}\n' +
+    '</style>').appendTo('head');
 
     // Handle nested array button click
     $(document).on('click', '.array-nested', function(e) {
