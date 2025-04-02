@@ -51,7 +51,7 @@
 }
 
 .api-tester-form .form-field label {
-  flex: 0 0 140px;
+  flex: 0 0 160px;
   padding-top: 5px;
 }
 
@@ -140,6 +140,26 @@
   margin-bottom: 7px
 }
 
+.array-root-type {
+    margin-left: 10px;
+}
+
+.array-type-root {
+    margin-bottom: 10px;
+    padding: 5px;
+    background: #f8f8f8;
+    border-radius: 4px;
+}
+
+.array-type-root label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.array-root-type,
+.array-type-root select,
 .array-row .array-key,
 .array-row .array-value,
 .array-row .array-type-toggle {

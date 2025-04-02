@@ -93,7 +93,30 @@ jQuery(document).ready(function($){
     function updateArrayField($container) {
         const fieldName = $container.data('field');
         const $hidden = $container.closest('form').find(`input[name="${fieldName}"]`);
-        const data = {};
+        const $rootType = $container.closest('.input-wrapper').find('.array-root-type');
+        const isRootArray = $rootType.val() === 'array';
+        
+        // If root is array, hide all top-level keys
+        $container.find('> .array-row .array-key').toggle(!isRootArray);
+        
+        let result;
+        if (isRootArray) {
+            result = [];
+            $container.find('> .array-row').each(function() {
+                const processed = processRow($(this));
+                if (processed) {
+                    result.push(Object.values(processed)[0]);
+                }
+            });
+        } else {
+            result = {};
+            $container.find('> .array-row').each(function() {
+                const processed = processRow($(this));
+                if (processed) {
+                    Object.assign(result, processed);
+                }
+            });
+        }
 
         function processRow($row) {
             const key = $row.find('> .array-key').val();
@@ -142,19 +165,12 @@ jQuery(document).ready(function($){
             }
         }
 
-        $container.find('> .array-row').each(function() {
-            const result = processRow($(this));
-            if (result) {
-                Object.assign(data, result);
-            }
-        });
-
         if ($hidden.length === 0) {
             console.error('Hidden field not found for', fieldName);
             return;
         }
 
-        const jsonStr = JSON.stringify(data);
+        const jsonStr = JSON.stringify(result);
         $hidden.val(jsonStr).trigger('change');
 
     }
@@ -233,7 +249,7 @@ jQuery(document).ready(function($){
         updateArrayField($container);
     });
     
-    // Handle array/object type toggle
+    // Handle array/object type toggle for nested items
     $(document).on('change', '.array-type-toggle', function() {
         const $row = $(this).closest('.array-row');
         const $container = $row.closest('.array-inputs');
@@ -243,6 +259,12 @@ jQuery(document).ready(function($){
         // Show/hide key inputs based on type
         $nestedContainer.find('.array-key').toggle(type === 'object');
         
+        updateArrayField($container);
+    });
+    
+    // Handle root array/object type toggle
+    $(document).on('change', '.array-root-type', function() {
+        const $container = $(this).closest('.input-wrapper').find('.array-inputs');
         updateArrayField($container);
     });
 

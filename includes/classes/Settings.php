@@ -118,13 +118,15 @@ class Settings{
             // Get tooltip text based on field name
             $tooltip = $this->get_field_tooltip($name);
             $html .= '<p class="form-field ' . esc_attr($field_id) . '_field">';
-            $html .= '<label for="' . esc_attr($field_id) . '">' . 
-                     esc_html(ucfirst(str_replace('_', ' ', $name))) . 
-                     ($tooltip ? ' <span class="woocommerce-help-tip" data-tip="' . esc_attr($tooltip) . '"></span>' : '') . 
+            $label_start = '<label for="' . esc_attr($field_id) . '">' . 
+                     esc_html(ucfirst(str_replace('_', ' ', $name)));
+            $label_end = ($tooltip ? ' <span class="woocommerce-help-tip" data-tip="' . esc_attr($tooltip) . '"></span>' : '') . 
                      '</label>';
+            $html .= $label_start;
             
             // Handle different types of values
             if ($name === 'method') {
+                $html .= $label_end;
                 $methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 foreach ($methods as $method) {
@@ -132,25 +134,30 @@ class Settings{
                 }
                 $html .= '</select>';
             } elseif( $name === 'content_type' ){
+                $html .= $label_end;
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 $html .= '<option value="application/json"' . ($value === 'application/json' ? ' selected' : '') . '>JSON</option>';
                 $html .= '<option value="application/x-www-form-urlencoded"' . ($value === 'application/x-www-form-urlencoded' ? ' selected' : '') . '>URL Encoded</option>';
                 $html .= '<option value="text/plain"' . ($value === 'text/plain' ? ' selected' : '') . '>Text</option>';
                 $html .= '</select>';
             } elseif ($name === 'accept') {
+                $html .= $label_end;
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 $html .= '<option value="application/json"' . ($value === 'application/json' ? ' selected' : '') . '>JSON</option>';
                 $html .= '<option value="application/x-www-form-urlencoded"' . ($value === 'application/x-www-form-urlencoded' ? ' selected' : '') . '>URL Encoded</option>';
                 $html .= '<option value="text/plain"' . ($value === 'text/plain' ? ' selected' : '') . '>Text</option>';
                 $html .= '</select>';
             } elseif( $name === 'cache_control' ){
+                $html .= $label_end;
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 $html .= '<option value=""' . ($value === '' ? ' selected' : '') . '>Default</option>';
                 $html .= '<option value="no-cache"' . ($value === 'no-cache' ? ' selected' : '') . '>No Cache</option>';
                 $html .= '</select>';
             } elseif( $name === 'authorization' ){
+                $html .= $label_end;
                 $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr($value) . '" class="woocommerce-input-wrap" placeholder="Bearer {encodable_text}"/>';
             } elseif( $name === 'encoding_type' ){
+                $html .= $label_end;
                 $html .= '<select id="encoding_type" name="' . esc_attr($name) . '" class="inline-select">';
                 $html .= '<option value=""' . ($value === '' ? ' selected' : '') . '>None</option>';
                 foreach( Operator::get_encoders() as $key => $name ){
@@ -158,11 +165,13 @@ class Settings{
                 }
                 $html .= '</select>';
             } elseif ($name === 'httpversion') {
+                $html .= $label_end;
                 $html .= '<select id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '">';
                 $html .= '<option value="1.0"' . ($value === '1.0' ? ' selected' : '') . '>1.0</option>';
                 $html .= '<option value="1.1"' . ($value === '1.1' ? ' selected' : '') . '>1.1</option>';
                 $html .= '</select>';
             } elseif ($name === 'limit_response_size') {
+                $html .= $label_end;
                 $min = 1024 * 1024; // 1MB
                 $max = 1024 * 1024 * 1024; // 1GB
                 $html .= '<span class="response-size-wrapper">';
@@ -174,12 +183,17 @@ class Settings{
                     ($value === null ? ' checked' : '') . '>Unlimited</label>';
                 $html .= '</span>';
             } elseif ($name === 'filename') {
+                $html .= $label_end;
                 $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr($value) . '">';
             } elseif (is_bool($value)) {
+                $html .= $label_end;
                 $html .= '<input type="checkbox" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '"' . 
                         ($value ? ' checked="checked"' : '') . '>';
             } elseif (is_array($value)) {
-                $html .= '<span class="input-wrapper"><span class="array-inputs" data-field="' . esc_attr($name) . '">';
+                // Remove the last </label> from html
+                $html .= '<select class="array-root-type"><option value="object">Object</option><option value="array">Array</option></select>';
+                $html .= $label_end;
+                $html .= '<span class="array-inputs" data-field="' . esc_attr($name) . '">';
                 if (!empty($value)) {
                     foreach ($value as $k => $v) {
                         $html .= '<span class="array-row">';
@@ -194,9 +208,11 @@ class Settings{
                 $html .= '<input type="hidden" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '">';
                 $html .= '</span></span>';
             } elseif (is_numeric($value)) {
+                $html .= $label_end;
                 $html .= '<input type="number" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . 
                         esc_attr($value) . '" class="numeric-input">';
             } else {
+                $html .= $label_end;
                 $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . 
                         esc_attr($value) . '">';
             }
