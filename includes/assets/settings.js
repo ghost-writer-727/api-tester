@@ -91,13 +91,24 @@ jQuery(document).ready(function($){
     }
 
     function updateArrayField($container) {
+        // Get the field name from the container's data attribute
         const fieldName = $container.data('field');
-        const $hidden = $container.closest('form').find(`input[name="${fieldName}"]`);
-        const $rootType = $container.closest('.input-wrapper').find('.array-root-type');
-        const isRootArray = $rootType.val() === 'array';
         
-        // If root is array, hide all top-level keys
-        $container.find('> .array-row .array-key').toggle(!isRootArray);
+        // Find the hidden input within the same form field
+        const $hidden = $container.closest('form').find(`input[name="${fieldName}"]`);
+        
+        // If no hidden input found, log error and return
+        if (!$hidden.length) {
+            console.error('Hidden input not found for array field');
+            return;
+        }
+        
+        // Find the root type selector
+        const $rootType = $container.closest('.form-field').find('.array-root-type');
+        const isRootArray = $rootType.length && $rootType.val() === 'array';
+        
+        // Toggle visibility of top-level keys based on root type
+        $container.find('> .array-row > .array-key').toggle(!isRootArray);
         
         let result;
         if (isRootArray) {
@@ -165,10 +176,7 @@ jQuery(document).ready(function($){
             }
         }
 
-        if ($hidden.length === 0) {
-            console.error('Hidden field not found for', fieldName);
-            return;
-        }
+        // Hidden field existence check already done above
 
         const jsonStr = JSON.stringify(result);
         $hidden.val(jsonStr).trigger('change');
@@ -264,19 +272,181 @@ jQuery(document).ready(function($){
     
     // Handle root array/object type toggle
     $(document).on('change', '.array-root-type', function() {
-        const $container = $(this).closest('.input-wrapper').find('.array-inputs');
+        const $inputWrapper = $(this).closest('.form-field');
+        const $container = $inputWrapper.find('.array-inputs');
+        const isRootArray = $(this).val() === 'array';
+        
+        // Make sure the container has the field name
+        if (!$container.data('field')) {
+            // Try to get the field name from the hidden input
+            const hiddenInputName = $inputWrapper.find('input[type="hidden"]').attr('name');
+            if (hiddenInputName) {
+                $container.data('field', hiddenInputName);
+            } else {
+                // Fallback: try to get field name from the form field class
+                const fieldClass = $inputWrapper.attr('class');
+                if (fieldClass) {
+                    const matches = fieldClass.match(/api_tester_(\w+)_field/);
+                    if (matches && matches[1]) {
+                        $container.data('field', matches[1]);
+                    }
+                }
+            }
+        }
+        
+        // Toggle visibility of all top-level keys
+        $container.find('> .array-row > .array-key').toggle(!isRootArray);
+        
+        // Update the keys if switching to array mode
+        if (isRootArray) {
+            // When switching to array, replace keys with sequential indices
+            let index = 0;
+            $container.find('> .array-row').each(function() {
+                $(this).find('> .array-key').val(index++);
+            });
+        } else {
+            // When switching to object, show all keys
+            // If keys are numeric and sequential, give them more meaningful default names
+            if (detectDataStructure($container) === 'array') {
+                $container.find('> .array-row').each(function(index) {
+                    const value = $(this).find('> .array-value').val().trim();
+                    // Generate a key based on the value or index
+                    let newKey = value ? value.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 10) : 'item';
+                    newKey = newKey + '_' + (index + 1);
+                    $(this).find('> .array-key').val(newKey);
+                });
+            }
+        }
+        
         updateArrayField($container);
     });
 
+    // Function to detect if data structure is an array or object
+    function detectDataStructure($container) {
+        // Check if all keys are numeric and sequential
+        let isArray = true;
+        let expectedIndex = 0;
+        
+        $container.find('> .array-row').each(function() {
+            const key = $(this).find('> .array-key').val().trim();
+            // If key is not a number or not the expected index, it's not an array
+            if (isNaN(key) || parseInt(key) !== expectedIndex) {
+                isArray = false;
+                return false; // break the loop
+            }
+            expectedIndex++;
+        });
+        
+        return isArray ? 'array' : 'object';
+    }
+    
     // Initialize array fields on page load
     $(document).ready(function() {
         $('.array-inputs').each(function() {
-            updateArrayField($(this));
+            const $container = $(this);
+            // Try to find the parent form field or input wrapper
+            const $formField = $container.closest('.form-field');
+            const $inputWrapper = $formField.length ? $formField : $container.closest('.input-wrapper');
+            
+            // Make sure the container has the field name
+            if (!$container.data('field')) {
+                // First try to get it directly from the container's data attribute
+                const dataField = $container.attr('data-field');
+                if (dataField) {
+                    $container.data('field', dataField);
+                } else {
+                    // Try to get the field name from the hidden input
+                    const $hiddenInput = $inputWrapper.find('input[type="hidden"]');
+                    if ($hiddenInput.length) {
+                        const hiddenInputName = $hiddenInput.attr('name');
+                        if (hiddenInputName) {
+                            $container.data('field', hiddenInputName);
+                        }
+                    }
+                }
+            }
+            
+            // Apply the root type toggle effect
+            const $rootType = $inputWrapper.find('.array-root-type');
+            if ($rootType.length) {
+                // Auto-detect if it should be array or object based on current structure
+                if ($container.find('> .array-row').length > 0) {
+                    const detectedType = detectDataStructure($container);
+                    $rootType.val(detectedType);
+                }
+                
+                const isRootArray = $rootType.val() === 'array';
+                $container.find('> .array-row > .array-key').toggle(!isRootArray);
+            }
+            
+            updateArrayField($container);
         });
     });
 
     // Add placeholder for title input
     $('.api-tester-form .form-field input[id="api_tester_title"]').attr('placeholder', 'Enter a title');
+    
+    // Display array field value in human-readable format
+    function displayArrayFieldValue() {
+        const $hiddenInput = $('#api_tester_body');
+        if ($hiddenInput.length) {
+            try {
+                // Get the current value
+                const value = $hiddenInput.val() || '{}';
+                // Parse the JSON
+                const parsedValue = JSON.parse(value);
+                // Format it nicely
+                const formattedValue = JSON.stringify(parsedValue, null, 4);
+                
+                // Check if the preview already exists
+                let $preview = $('#array_field_preview');
+                if (!$preview.length) {
+                    // Create the preview container
+                    $preview = $('<div id="array_field_preview" style="margin-top: 20px;padding: 10px;background: #f5f5f5;border: 1px solid #ddd;border-radius: 4px;position: fixed;top: 0;width: 100%;left: 0;z-index: 100000;">' +
+                        '<h4 style="margin-top: 0; margin-bottom: 10px;">Current Value (Live Preview):</h4>' +
+                        '<pre style="white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; background: #fff; padding: 10px; border: 1px solid #eee; border-radius: 3px; margin: 0;"></pre>' +
+                        '</div>');
+                    $hiddenInput.closest('.form-field').append($preview);
+                }
+                
+                // Update the preview content
+                $preview.find('pre').text(formattedValue);
+            } catch (e) {
+                console.error('Error parsing array field value:', e);
+                // Create or update preview with error message
+                let $preview = $('#array_field_preview');
+                if (!$preview.length) {
+                    $preview = $('<div id="array_field_preview" style="margin-top: 20px; padding: 10px; background: #fff0f0; border: 1px solid #ffdddd; border-radius: 4px;">' +
+                        '<h4 style="margin-top: 0; margin-bottom: 10px;">Current Value (Error):</h4>' +
+                        '<pre style="white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; background: #fff; padding: 10px; border: 1px solid #ffcccc; border-radius: 3px; margin: 0; color: #cc0000;"></pre>' +
+                        '</div>');
+                    $hiddenInput.closest('.form-field').append($preview);
+                }
+                $preview.find('pre').text('Error parsing JSON: ' + e.message + '\n\nRaw value: ' + $hiddenInput.val());
+            }
+        }
+    }
+    
+    // Call the function on page load
+    displayArrayFieldValue();
+    
+    // Update the preview whenever the array field is updated
+    $(document).on('change', '#api_tester_body', displayArrayFieldValue);
+    
+    // Also update when any array field elements change
+    $(document).on('change', '.array-key, .array-value, .array-type-toggle', function() {
+        // Use setTimeout to ensure the hidden field is updated first
+        setTimeout(displayArrayFieldValue, 100);
+    });
+    
+    // Add a MutationObserver to watch for changes to the hidden input value
+    const hiddenInput = document.getElementById('api_tester_body');
+    if (hiddenInput) {
+        const observer = new MutationObserver(function(mutations) {
+            displayArrayFieldValue();
+        });
+        observer.observe(hiddenInput, { attributes: true, attributeFilter: ['value'] });
+    }
 
     // Handle stream checkbox to show/hide filename
     function updateFilenameVisibility() {

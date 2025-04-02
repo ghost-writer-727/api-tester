@@ -69,7 +69,6 @@
 .api-tester-form .form-field textarea,
 .api-tester-form .form-field .input-wrapper {
   flex: 1;
-  min-width: 0;
   width: 100%;
   border-radius: 0;
   border-style: none;
@@ -88,7 +87,6 @@
 .api-tester-form .form-field select:focus{
   box-shadow: 0 0 0 1px #eee;
   color: #2c3338;
-  max-width: fit-content;
 }
 
 .api-tester form .form-field input[type="text"].array-key {
@@ -165,8 +163,6 @@
 .array-row .array-type-toggle {
   background: #fff;
   border: 1px solid #ddd;
-  padding: 6px 12px;
-  border-radius: 3px;
   width: 200px;
 }
 
