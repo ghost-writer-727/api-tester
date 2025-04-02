@@ -141,7 +141,8 @@
 }
 
 .array-row .array-key,
-.array-row .array-value {
+.array-row .array-value,
+.array-row .array-type-toggle {
   background: #fff;
   border: 1px solid #ddd;
   padding: 6px 12px;
@@ -270,6 +271,15 @@ input[type="range"]:disabled {
   display: flex;
   flex-direction: column;
   margin-left: 24px;
+}
+
+.array-type-toggle {
+  min-width: 80px;
+  margin-right: 8px;
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
 }
 
 .nested-array-container > .array-row {

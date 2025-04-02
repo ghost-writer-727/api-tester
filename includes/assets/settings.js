@@ -39,6 +39,10 @@ jQuery(document).ready(function($){
             <div class="array-row">
                 <input type="text" class="array-key" placeholder="Key">
                 <input type="text" class="array-value" placeholder="Value">
+                <select class="array-type-toggle" style="display:none">
+                    <option value="array">Array</option>
+                    <option value="object">Object</option>
+                </select>
                 <button type="button" class="button-link array-nested" title="Add child item">
                     <span class="dashicons dashicons-plus"></span>
                 </button>
@@ -88,36 +92,54 @@ jQuery(document).ready(function($){
 
     function updateArrayField($container) {
         const fieldName = $container.data('field');
-        // Look for the hidden input in the parent form using just the field name
         const $hidden = $container.closest('form').find(`input[name="${fieldName}"]`);
         const data = {};
 
         function processRow($row) {
             const key = $row.find('> .array-key').val();
             const $value = $row.find('> .array-value');
-            const $nestedContainer = $row.find('> .nested-array-container');
+            const $nestedContainer = $row.next('.nested-array-container');
+            const type = $row.find('> .array-type-toggle').val() || 'object';
             
-            if (key && key.trim()) {
-                if ($nestedContainer.length) {
-                    // Process nested array recursively
+            if (!key && !$nestedContainer.length) return null;
+            
+            if ($nestedContainer.length) {
+                const trimmedKey = key.trim();
+                if (type === 'array') {
+                    // Handle as array - ignore keys
                     const nestedArray = [];
                     $nestedContainer.find('> .array-row').each(function() {
-                        // Recursively process each nested row
-                        const result = processRow($(this));
-                        if (result) {
-                            nestedArray.push(result);
+                        const $childRow = $(this);
+                        const childValue = $childRow.find('> .array-value').val();
+                        const $childNested = $childRow.next('.nested-array-container');
+                        
+                        if ($childNested.length) {
+                            const nestedResult = processRow($childRow);
+                            if (nestedResult) {
+                                nestedArray.push(Object.values(nestedResult)[0]);
+                            }
+                        } else if (childValue) {
+                            nestedArray.push(childValue.trim());
                         }
                     });
-                    const trimmedKey = key.trim();
                     return { [trimmedKey]: nestedArray };
                 } else {
-                    // Regular key-value pair
-                    const trimmedKey = key.trim();
-                    const trimmedValue = $value.val().trim();
-                    return trimmedValue || trimmedKey ? { [trimmedKey]: trimmedValue } : null;
+                    // Handle as object - keep keys
+                    const nestedObj = {};
+                    $nestedContainer.find('> .array-row').each(function() {
+                        const result = processRow($(this));
+                        if (result) {
+                            Object.assign(nestedObj, result);
+                        }
+                    });
+                    return { [trimmedKey]: nestedObj };
                 }
+            } else {
+                // Regular key-value pair
+                const trimmedKey = key.trim();
+                const trimmedValue = $value.val().trim();
+                return trimmedValue || trimmedKey ? { [trimmedKey]: trimmedValue } : null;
             }
-            return null;
         }
 
         $container.find('> .array-row').each(function() {
@@ -192,11 +214,34 @@ jQuery(document).ready(function($){
             $nestedContainer = $('<div class="nested-array-container"></div>');
             $row.after($nestedContainer);
             $row.addClass('has-children');
+            
+            // Show type toggle and hide value input
+            $row.find('.array-value').hide();
+            $row.find('.array-type-toggle').show();
         }
 
         // Add new row at the end of the container
         const $newRow = createArrayRow(true);
+        const type = $row.find('.array-type-toggle').val();
+        
+        // Hide key input if parent is array type
+        if (type === 'array') {
+            $newRow.find('.array-key').hide();
+        }
+        
         $nestedContainer.append($newRow);
+        updateArrayField($container);
+    });
+    
+    // Handle array/object type toggle
+    $(document).on('change', '.array-type-toggle', function() {
+        const $row = $(this).closest('.array-row');
+        const $container = $row.closest('.array-inputs');
+        const $nestedContainer = $row.next('.nested-array-container');
+        const type = $(this).val();
+        
+        // Show/hide key inputs based on type
+        $nestedContainer.find('.array-key').toggle(type === 'object');
         
         updateArrayField($container);
     });
