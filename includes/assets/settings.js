@@ -135,15 +135,6 @@ jQuery(document).ready(function($){
         const jsonStr = JSON.stringify(data);
         $hidden.val(jsonStr).trigger('change');
 
-        // Update remove button states for nested rows
-        $container.find('.nested-array-container').each(function() {
-            const $nestedRows = $(this).find('> .array-row');
-            if ($nestedRows.length === 1) {
-                $nestedRows.find('> .array-remove').addClass('disabled');
-            } else {
-                $nestedRows.find('> .array-remove').removeClass('disabled');
-            }
-        });
     }
 
     // Handle array inputs
@@ -152,24 +143,6 @@ jQuery(document).ready(function($){
         updateArrayField($container);
     }
 
-/*    function populateArrayField($container, data) {
-        resetArrayField($container);
-        if (!data) return;
-
-        try {
-            const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-            Object.entries(parsedData).forEach(([key, value]) => {
-                const $row = createArrayRow();
-                $row.find('.array-key').val(key);
-                $row.find('.array-value').val(value);
-                $container.find('.array-add').before($row);
-            });
-            updateArrayField($container);
-        } catch (e) {
-            console.error('Error parsing array field data:', e);
-        }
-    }
-*/
     $(document).on('click', '.array-add', function(e) {
         e.preventDefault();
         const $container = $(this).closest('.array-inputs');

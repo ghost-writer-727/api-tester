@@ -91,6 +91,11 @@
   max-width: fit-content;
 }
 
+.api-tester form .form-field input[type="text"].array-key {
+  width: 250px;
+  flex: none;
+}
+
 .api-tester-form .form-field.api_tester_title_field {
   margin-top: 0;
 }
