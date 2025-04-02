@@ -205,8 +205,10 @@ class Settings{
                     }
                 }
                 $html .= '<button type="button" class="button array-add">Add Item</button>';
-                $html .= '<input type="hidden" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '">';
-                $html .= '</span></span>';
+                $html .= '<button type="button" class="button button-secondary array-preview">Preview</button>';
+                $html .= '<input type="hidden" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '" class="array-text-value">';
+                $html .= '</span>';
+                $html .= '</span>';
             } elseif (is_numeric($value)) {
                 $html .= $label_end;
                 $html .= '<input type="number" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . 
@@ -228,6 +230,11 @@ class Settings{
         $html .= '<input type="button" value="Delete Preset" class="button button-secondary api-tester-delete" style="display:none;">';
         $html .= '</p>';
         $html .= '</form>';
+
+        $html .= '<div id="array_field_preview" >';
+        $html .= '<h4>Current Value:</h4>';
+        $html .= '<pre></pre>';
+        $html .= '</div>';
         
         return $html;
     }

@@ -193,6 +193,37 @@
   background: #eee;
 }
 
+/* Preview window for arrays */
+#array_field_preview {
+  margin-top: 20px;
+  padding: 10px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  position: fixed;
+  top: 5%;
+  width: 40%;
+  left: 5%;
+  z-index: 100000;
+  height: 45%;
+}
+#array_field_preview h4 {
+  margin-top: 0; 
+  margin-bottom: 10px;
+}
+
+#array_field_preview pre {
+  white-space: pre-wrap; 
+  word-break: break-all; 
+  overflow: scroll; 
+  margin: 0 0 0 10px;
+  height: 85%;
+}
+
+.array-text-value {
+  color: #aaa;
+}
+
 /* Range slider styling */
 .response-size-wrapper {
   display: flex;
@@ -314,7 +345,8 @@ input[type="range"]:disabled {
   text-decoration: none;
 }
 
-.wp-core-ui .api-tester .button.array-add {
+.wp-core-ui .api-tester .button.array-add,
+.wp-core-ui .api-tester .button.array-preview {
   align-self: flex-start;
   margin-top: 0.5em;
   margin-bottom: 5px;
@@ -604,8 +636,6 @@ input[type="range"]:disabled {
 .api-tester .api-response-header {
   font-size: 1.2em;
 }
-
-
 
 .api-tester pre {
   background-color: #333;

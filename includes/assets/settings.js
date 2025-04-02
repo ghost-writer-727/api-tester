@@ -114,9 +114,19 @@ jQuery(document).ready(function($){
         if (isRootArray) {
             result = [];
             $container.find('> .array-row').each(function() {
-                const processed = processRow($(this));
+                const $row = $(this);
+                // Even in array mode, we process the row as if it were an object
+                // to maintain the key information
+                const processed = processRow($row);
                 if (processed) {
+                    // For arrays, we only care about the values
                     result.push(Object.values(processed)[0]);
+                    
+                    // Store the key in the DOM for when we switch back to object mode
+                    const key = $row.find('> .array-key').val();
+                    if (key && !$row.find('> .array-key').data('saved-key')) {
+                        $row.find('> .array-key').data('saved-key', key);
+                    }
                 }
             });
         } else {
@@ -273,6 +283,13 @@ jQuery(document).ready(function($){
         const $container = $(this).closest('.array-inputs');
         const isNested = $(this).closest('.nested-array-container').length > 0;
         const $row = createArrayRow(isNested);
+        
+        // Check if we're in array mode and hide the key input if needed
+        const $rootType = $container.closest('.form-field').find('.array-root-type');
+        if ($rootType.length && $rootType.val() === 'array' && !isNested) {
+            $row.find('.array-key').hide();
+        }
+        
         $(this).before($row);
         updateArrayField($container);
     });
@@ -393,25 +410,37 @@ jQuery(document).ready(function($){
         // Toggle visibility of all top-level keys
         $container.find('> .array-row > .array-key').toggle(!isRootArray);
         
-        // Update the keys if switching to array mode
+        // Handle key preservation when switching between modes
         if (isRootArray) {
-            // When switching to array, replace keys with sequential indices
-            let index = 0;
+            // When switching to array mode, save the current keys
             $container.find('> .array-row').each(function() {
-                $(this).find('> .array-key').val(index++);
+                const $row = $(this);
+                const $key = $row.find('> .array-key');
+                const keyValue = $key.val().trim();
+                
+                // Save the original key if it's not empty and not already saved
+                if (keyValue && !$key.data('original-key')) {
+                    $key.data('original-key', keyValue);
+                }
             });
         } else {
-            // When switching to object, show all keys
-            // If keys are numeric and sequential, give them more meaningful default names
-            if (detectDataStructure($container) === 'array') {
-                $container.find('> .array-row').each(function(index) {
-                    const value = $(this).find('> .array-value').val().trim();
-                    // Generate a key based on the value or index
+            // When switching to object mode, restore original keys if available
+            $container.find('> .array-row').each(function() {
+                const $row = $(this);
+                const $key = $row.find('> .array-key');
+                const originalKey = $key.data('original-key');
+                
+                if (originalKey) {
+                    // Restore the original key
+                    $key.val(originalKey);
+                } else {
+                    // If no original key is saved, generate a meaningful one
+                    const value = $row.find('> .array-value').val().trim();
                     let newKey = value ? value.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 10) : 'item';
-                    newKey = newKey + '_' + (index + 1);
-                    $(this).find('> .array-key').val(newKey);
-                });
-            }
+                    newKey = newKey + '_' + (Math.floor(Math.random() * 1000));
+                    $key.val(newKey);
+                }
+            });
         }
         
         updateArrayField($container);
@@ -483,66 +512,35 @@ jQuery(document).ready(function($){
     $('.api-tester-form .form-field input[id="api_tester_title"]').attr('placeholder', 'Enter a title');
     
     // Display array field value in human-readable format
-    function displayArrayFieldValue() {
-        const $hiddenInput = $('#api_tester_body');
-        if ($hiddenInput.length) {
-            try {
-                // Get the current value
-                const value = $hiddenInput.val() || '{}';
-                // Parse the JSON
-                const parsedValue = JSON.parse(value);
-                // Format it nicely
-                const formattedValue = JSON.stringify(parsedValue, null, 4);
-                
-                // Check if the preview already exists
-                let $preview = $('#array_field_preview');
-                if (!$preview.length) {
-                    // Create the preview container
-                    $preview = $('<div id="array_field_preview" style="margin-top: 20px;padding: 10px;background: #f5f5f5;border: 1px solid #ddd;border-radius: 4px;position: fixed;top: 0;width: 100%;left: 0;z-index: 100000;">' +
-                        '<h4 style="margin-top: 0; margin-bottom: 10px;">Current Value (Live Preview):</h4>' +
-                        '<pre style="white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; background: #fff; padding: 10px; border: 1px solid #eee; border-radius: 3px; margin: 0;"></pre>' +
-                        '</div>');
-                    $hiddenInput.closest('.form-field').append($preview);
-                }
-                
-                // Update the preview content
-                $preview.find('pre').text(formattedValue);
-            } catch (e) {
-                console.error('Error parsing array field value:', e);
-                // Create or update preview with error message
-                let $preview = $('#array_field_preview');
-                if (!$preview.length) {
-                    $preview = $('<div id="array_field_preview" style="margin-top: 20px; padding: 10px; background: #fff0f0; border: 1px solid #ffdddd; border-radius: 4px;">' +
-                        '<h4 style="margin-top: 0; margin-bottom: 10px;">Current Value (Error):</h4>' +
-                        '<pre style="white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto; background: #fff; padding: 10px; border: 1px solid #ffcccc; border-radius: 3px; margin: 0; color: #cc0000;"></pre>' +
-                        '</div>');
-                    $hiddenInput.closest('.form-field').append($preview);
-                }
-                $preview.find('pre').text('Error parsing JSON: ' + e.message + '\n\nRaw value: ' + $hiddenInput.val());
-            }
+    function displayArrayFieldPreview( force_hide = true) {
+        const $preview = $('#array_field_preview');
+        if( $preview.is(":visible") && ! force_hide){
+            $preview.hide();
+        } else {
+            $preview.show();
         }
     }
-    
-    // Call the function on page load
-    displayArrayFieldValue();
-    
-    // Update the preview whenever the array field is updated
-    $(document).on('change', '#api_tester_body', displayArrayFieldValue);
-    
-    // Also update when any array field elements change
-    $(document).on('change', '.array-key, .array-value, .array-type-toggle', function() {
-        // Use setTimeout to ensure the hidden field is updated first
-        setTimeout(displayArrayFieldValue, 100);
-    });
-    
-    // Add a MutationObserver to watch for changes to the hidden input value
-    const hiddenInput = document.getElementById('api_tester_body');
-    if (hiddenInput) {
-        const observer = new MutationObserver(function(mutations) {
-            displayArrayFieldValue();
-        });
-        observer.observe(hiddenInput, { attributes: true, attributeFilter: ['value'] });
+
+    // Update the content fo the array field preview
+    function updateArrayFieldPreview(content){
+        const $preview = $('#array_field_preview');
+        const parsedValue = JSON.parse(content);
+        const formattedValue = JSON.stringify(parsedValue, null, 4);
+        $preview.find('pre').text(formattedValue);
     }
+
+    // Handle click of the Preview button
+    $(document).on('click', '.array-preview', function(e) {
+        e.preventDefault();
+        const $input = $(this).next('input');
+        updateArrayFieldPreview($input.val())
+        displayArrayFieldPreview( false );
+    });
+
+    // Auto hide preview on edit
+    $(document).on('change', '.array-text-value', function() {
+        updateArrayFieldPreview($(this).val());
+    });
 
     // Handle stream checkbox to show/hide filename
     function updateFilenameVisibility() {
