@@ -132,11 +132,6 @@
   gap: 0.5em;
   align-items: center;
   border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.array-row:hover {
-  background: rgba(0,0,0,0.03);
 }
 
 .array-row .array-key,
@@ -160,24 +155,13 @@
 .array-row .array-remove {
   padding: 4px 8px;
   border-radius: 3px;
-  background: #f8f8f8;
-  border: 1px solid #ddd;
   cursor: pointer;
   color: #666;
 }
 
-.array-row .array-add:hover,
-.array-row .array-remove:hover {
-  background: #f0f0f0;
-}
-
 .nested-array-container {
   margin-left: 24px;
-  padding-left: 12px;
-  border-left: 2px solid #eee;
 }
-
-
 
 /* Vertical lines connecting parent to children */
 .array-row.has-children::after {
@@ -188,15 +172,6 @@
   height: 12px;
   width: 2px;
   background: #eee;
-}
-
-/* Add some spacing between groups */
-.array-row + .nested-array-container {
-  margin-bottom: 8px;
-}
-
-.array-row + .nested-array-container:last-child {
-  margin-bottom: 0;
 }
 
 /* Range slider styling */
@@ -271,19 +246,20 @@ input[type="range"]:disabled {
   flex: 1;
 }
 
-.array-row .array-remove,
-.array-row .array-nested {
+.wp-core-ui .array-row .button-link,
+.wp-core-ui .array-row .button-link:focus {
+  text-decoration: none;
   color: #00a386;
   padding: 0;
   cursor: pointer;
+  box-shadow: none;
+  outline: none;
+  border: none;
 }
 
-.array-row .array-remove {
+.wp-core-ui .array-row .button-link.array-remove,
+.wp-core-ui .array-row .button-link.array-remove:focus {
   color: #dc3232;
-}
-
-.wp-core-ui .button-link.array-nested {
-  text-decoration: none;
 }
 
 .nested-array-container {
