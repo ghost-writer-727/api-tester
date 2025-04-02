@@ -35,7 +35,7 @@ jQuery(document).ready(function($){
     }
     // Helper functions for array inputs
     function createArrayRow(isNested = false) {
-        return $(`
+        const $row = $(`
             <div class="array-row">
                 <input type="text" class="array-key" placeholder="Key">
                 <input type="text" class="array-value" placeholder="Value">
@@ -47,6 +47,43 @@ jQuery(document).ready(function($){
                 </button>
             </div>
         `);
+
+        // Add event handler for when a nested container is added
+        const updateValueVisibility = () => {
+            const hasNested = $row.next('.nested-array-container').length > 0;
+            $row.find('.array-value').toggle(!hasNested);
+        };
+
+        // Store observer reference for cleanup
+        let observer = null;
+
+        // Set up mutation observer after row is added to DOM
+        setTimeout(() => {
+            const parent = $row.parent()[0];
+            if (parent) {
+                observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'childList') {
+                            updateValueVisibility();
+                        }
+                    });
+                });
+                observer.observe(parent, { childList: true });
+                
+                // Initial check after DOM attachment
+                updateValueVisibility();
+            }
+        }, 0);
+
+        // Clean up observer when row is removed
+        $row.on('remove', () => {
+            if (observer) {
+                observer.disconnect();
+                observer = null;
+            }
+        });
+        
+        return $row;
     }
 
     function updateArrayField($container) {
@@ -63,20 +100,21 @@ jQuery(document).ready(function($){
             if (key && key.trim()) {
                 if ($nestedContainer.length) {
                     // Process nested array recursively
-                    const nestedData = {};
+                    const nestedArray = [];
                     $nestedContainer.find('> .array-row').each(function() {
                         // Recursively process each nested row
                         const result = processRow($(this));
                         if (result) {
-                            Object.assign(nestedData, result);
+                            nestedArray.push(result);
                         }
                     });
                     const trimmedKey = key.trim();
-                    return { [trimmedKey]: nestedData };
+                    return { [trimmedKey]: nestedArray };
                 } else {
                     // Regular key-value pair
                     const trimmedKey = key.trim();
-                    return { [trimmedKey]: $value.val() || '' };
+                    const trimmedValue = $value.val().trim();
+                    return trimmedValue || trimmedKey ? { [trimmedKey]: trimmedValue } : null;
                 }
             }
             return null;
