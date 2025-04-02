@@ -184,16 +184,19 @@ jQuery(document).ready(function($){
     $(document).on('click', '.array-nested', function(e) {
         e.preventDefault();
         const $row = $(this).closest('.array-row');
+        let $nestedContainer = $row.next('.nested-array-container');
         const $container = $row.closest('.array-inputs');
         
-        // Always create a new nested container after the current row
-        const $nestedContainer = $('<div class="nested-array-container"></div>');
-        const $initialRow = createArrayRow(true);
-        $nestedContainer.append($initialRow);
-        
-        // Insert after the current row
-        $row.after($nestedContainer);
-        $row.addClass('has-children');
+        if (!$nestedContainer.length) {
+            // Create new container if it doesn't exist
+            $nestedContainer = $('<div class="nested-array-container"></div>');
+            $row.after($nestedContainer);
+            $row.addClass('has-children');
+        }
+
+        // Add new row at the end of the container
+        const $newRow = createArrayRow(true);
+        $nestedContainer.append($newRow);
         
         updateArrayField($container);
     });
