@@ -56,6 +56,7 @@ jQuery(document).ready(function($){
         const updateValueVisibility = () => {
             const hasNested = $row.next('.nested-array-container').length > 0;
             $row.find('.array-value').toggle(!hasNested);
+            $row.find('.array-type-toggle').toggle(hasNested);
         };
 
         // Store observer reference for cleanup
