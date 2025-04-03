@@ -1,6 +1,25 @@
 jQuery(document).ready(function($){
     // Initialize form elements
     const $form = $('.api-tester-form');
+    
+    // Check content-type on load and changes
+    function maybeAllowNesting() {
+        const $contentType = $('select[name="content_type"]');
+        if ($contentType.length && $contentType.val() === 'application/json') {
+            const $bodyInputs = $('.array-inputs[data-field="body"]');
+            $bodyInputs.find('.array-nested').show();
+        } else {
+            const $bodyInputs = $('.array-inputs[data-field="body"]');
+            $bodyInputs.find('.array-nested').hide();
+        }
+    }
+    
+    // Check on page load
+    maybeAllowNesting();
+    
+    // Check on change
+    $(document).on('change', 'select[name="content_type"]', maybeAllowNesting);
+
     const $runButton = $('.api-tester-run');
     const $saveButton = $('.api-tester-save');
     const $duplicateButton = $('.api-tester-duplicate');
@@ -102,7 +121,7 @@ jQuery(document).ready(function($){
             console.error('Array text value input not found for array field');
             return;
         }
-        console.log( fieldName + ': ' + $jsonField.val() );
+
         // Find the root type selector
         const $rootType = $container.closest('.form-field').find('.array-root-type');
         const isRootArray = $rootType.length && $rootType.val() === 'array';
@@ -110,17 +129,11 @@ jQuery(document).ready(function($){
         // Toggle visibility of top-level keys based on root type
         $container.find('> .array-row > .array-key').toggle(!isRootArray);
 
-        // Count how many rows are found
-        console.log( 'Container: ' + $container.data('field') );
-        console.log( $container.find('> .array-row').length );
-        
         let result;
         if (isRootArray) {
-            console.log( 'This root is an array' );
             result = [];
             $container.find('> .array-row').each(function() {
                 const $row = $(this);
-                console.log( "found row " + $row.data('saved-key') + " with key " + $row.find('> .array-key').val() + " and value " + $row.find('> .array-value').val() + " and type " + $row.find('> .array-type-toggle').val() );
                 // Even in array mode, we process the row as if it were an object
                 // to maintain the key information
                 const processed = processRow($row);
@@ -136,7 +149,6 @@ jQuery(document).ready(function($){
                 }
             });
         } else {
-            console.log( 'This root is an object' );
             result = {};
             // First pass: collect all keys to detect duplicates
             const keyMap = {};
@@ -182,7 +194,6 @@ jQuery(document).ready(function($){
                     Object.assign(result, processed);
                 }
             });
-            console.log( 'Result: ', result );
         }
 
         function processRow($row) {
@@ -191,7 +202,8 @@ jQuery(document).ready(function($){
             const $nestedContainer = $row.next('.nested-array-container');
             const type = $row.find('> .array-type-toggle').val() || 'object';
             
-            if (!key && !$nestedContainer.length) return null;
+            // Skip if row is completely empty (no key, no value, no nested items)
+            if (!key && !$nestedContainer.length && !$value.val()) return null;
             
             if ($nestedContainer.length) {
                 const trimmedKey = key.trim();
@@ -324,11 +336,6 @@ jQuery(document).ready(function($){
         updateArrayField($container);
     });
 
-    $(document).on('change keyup', '.array-key, .array-value', function() {
-        const $container = $(this).closest('.array-inputs');
-        updateArrayField($container);
-    });
-    
     // Add tooltip styling for better visibility
     $('<style>\n' +
         '[title] { position: relative; }\n' +
@@ -1018,7 +1025,6 @@ jQuery(document).ready(function($){
 
     function getResponsesForPreset(){
         if( ! presetId || ! api_tester.presets || ! api_tester.presets[presetId] || ! api_tester.presets[presetId].responses || ! api_tester.presets[presetId].responses.length ){
-            console.log('getResponsesForPreset: No valid responses found for preset: ' + presetId, api_tester.presets);
             return [];
         }
         return api_tester.presets[presetId].responses;
