@@ -345,11 +345,20 @@ input[type="range"]:disabled {
   text-decoration: none;
 }
 
-.wp-core-ui .api-tester .button.array-add,
-.wp-core-ui .api-tester .button.array-preview {
-  align-self: flex-start;
+.array-buttons {
+  display: block;
   margin-top: 0.5em;
   margin-bottom: 5px;
+}
+
+.wp-core-ui .api-tester .button.array-add,
+.wp-core-ui .api-tester .button.array-preview {
+  display: inline-block;
+  margin: 0;
+}
+
+.wp-core-ui .api-tester .button.array-preview {
+  margin-left: 5px;
 }
 
 .preset-name-field {

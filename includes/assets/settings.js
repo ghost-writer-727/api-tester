@@ -36,7 +36,7 @@ jQuery(document).ready(function($){
     // Helper functions for array inputs
     function createArrayRow(isNested = false) {
         const $row = $(`
-            <div class="array-row">
+            <span class="array-row">
                 <input type="text" class="array-key" placeholder="Key">
                 <input type="text" class="array-value" placeholder="Value">
                 <select class="array-type-toggle" style="display:none">
@@ -49,7 +49,7 @@ jQuery(document).ready(function($){
                 <button type="button" class="button-link array-remove">
                     <span class="dashicons dashicons-no-alt"></span>
                 </button>
-            </div>
+            </span>
         `);
 
         // Add event handler for when a nested container is added
@@ -94,27 +94,32 @@ jQuery(document).ready(function($){
         // Get the field name from the container's data attribute
         const fieldName = $container.data('field');
         
-        // Find the hidden input within the same form field
-        const $hidden = $container.closest('form').find(`input[name="${fieldName}"]`);
-        
-        // If no hidden input found, log error and return
-        if (!$hidden.length) {
-            console.error('Hidden input not found for array field');
+        // Find the array-text-value input within the same form field
+        const $jsonField = $('input.array-text-value[name="' + fieldName + '"]');
+        // If no input found, log error and return
+        if (!$jsonField.length) {
+            console.error('Array text value input not found for array field');
             return;
         }
-        
+        console.log( fieldName + ': ' + $jsonField.val() );
         // Find the root type selector
         const $rootType = $container.closest('.form-field').find('.array-root-type');
         const isRootArray = $rootType.length && $rootType.val() === 'array';
         
         // Toggle visibility of top-level keys based on root type
         $container.find('> .array-row > .array-key').toggle(!isRootArray);
+
+        // Count how many rows are found
+        console.log( 'Container: ' + $container.data('field') );
+        console.log( $container.find('> .array-row').length );
         
         let result;
         if (isRootArray) {
+            console.log( 'This root is an array' );
             result = [];
             $container.find('> .array-row').each(function() {
                 const $row = $(this);
+                console.log( "found row " + $row.data('saved-key') + " with key " + $row.find('> .array-key').val() + " and value " + $row.find('> .array-value').val() + " and type " + $row.find('> .array-type-toggle').val() );
                 // Even in array mode, we process the row as if it were an object
                 // to maintain the key information
                 const processed = processRow($row);
@@ -130,6 +135,7 @@ jQuery(document).ready(function($){
                 }
             });
         } else {
+            console.log( 'This root is an object' );
             result = {};
             // First pass: collect all keys to detect duplicates
             const keyMap = {};
@@ -175,6 +181,7 @@ jQuery(document).ready(function($){
                     Object.assign(result, processed);
                 }
             });
+            console.log( 'Result: ', result );
         }
 
         function processRow($row) {
@@ -266,10 +273,9 @@ jQuery(document).ready(function($){
         }
 
         // Hidden field existence check already done above
-
         const jsonStr = JSON.stringify(result);
-        $hidden.val(jsonStr).trigger('change');
-
+        $jsonField.val(jsonStr).trigger('change');
+        
     }
 
     // Handle array inputs
@@ -290,7 +296,7 @@ jQuery(document).ready(function($){
             $row.find('.array-key').hide();
         }
         
-        $(this).before($row);
+        $container.find('.array-buttons').before($row);
         updateArrayField($container);
     });
 
@@ -348,7 +354,7 @@ jQuery(document).ready(function($){
         
         if (!$nestedContainer.length) {
             // Create new container if it doesn't exist
-            $nestedContainer = $('<div class="nested-array-container"></div>');
+            $nestedContainer = $('<span class="nested-array-container"></span>');
             $row.after($nestedContainer);
             $row.addClass('has-children');
             
@@ -532,7 +538,7 @@ jQuery(document).ready(function($){
     // Handle click of the Preview button
     $(document).on('click', '.array-preview', function(e) {
         e.preventDefault();
-        const $input = $(this).next('input');
+        const $input = $(this).closest('.array-inputs').find('.array-text-value');
         updateArrayFieldPreview($input.val())
         displayArrayFieldPreview( false );
     });
@@ -540,6 +546,12 @@ jQuery(document).ready(function($){
     // Auto hide preview on edit
     $(document).on('change', '.array-text-value', function() {
         updateArrayFieldPreview($(this).val());
+    });
+    
+    // Make sure array field updates when any array input changes
+    $(document).on('change keyup', '.array-key, .array-value', function() {
+        const $container = $(this).closest('.array-inputs');
+        updateArrayField($container);
     });
 
     // Handle stream checkbox to show/hide filename

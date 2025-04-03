@@ -204,11 +204,13 @@ class Settings{
                         $html .= '</span>';
                     }
                 }
+                $html .= '<span class="array-buttons">';
                 $html .= '<button type="button" class="button array-add">Add Item</button>';
                 $html .= '<button type="button" class="button button-secondary array-preview">Preview</button>';
-                $html .= '<input type="hidden" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '" class="array-text-value">';
                 $html .= '</span>';
+                $html .= '<input id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '" class="array-text-value">';
                 $html .= '</span>';
+//                $html .= '</span>';
             } elseif (is_numeric($value)) {
                 $html .= $label_end;
                 $html .= '<input type="number" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . 
@@ -231,7 +233,7 @@ class Settings{
         $html .= '</p>';
         $html .= '</form>';
 
-        $html .= '<div id="array_field_preview" >';
+        $html .= '<div id="array_field_preview" style="display:none;" >';
         $html .= '<h4>Current Value:</h4>';
         $html .= '<pre></pre>';
         $html .= '</div>';
