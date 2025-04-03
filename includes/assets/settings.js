@@ -309,6 +309,9 @@ jQuery(document).ready(function($){
             $row.find('.array-key').hide();
         }
         
+        // Update nesting buttons visibility
+        maybeAllowNesting();
+        
         $container.find('.array-buttons').before($row);
         updateArrayField($container);
     });
