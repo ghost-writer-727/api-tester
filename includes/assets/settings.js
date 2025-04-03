@@ -370,7 +370,7 @@ jQuery(document).ready(function($){
         
         // Hide key input if parent is array type
         if (type === 'array') {
-            $newRow.find('.array-key').hide();
+            $newRow.find('> .array-key').hide();
         }
         
         $nestedContainer.append($newRow);
@@ -385,7 +385,7 @@ jQuery(document).ready(function($){
         const type = $(this).val();
         
         // Show/hide key inputs based on type
-        $nestedContainer.find('.array-key').toggle(type === 'object');
+        $nestedContainer.find('> .array-row > .array-key').toggle(type === 'object');
         
         updateArrayField($container);
     });
