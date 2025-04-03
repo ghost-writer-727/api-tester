@@ -2,12 +2,22 @@ jQuery(document).ready(function($){
     // Initialize form elements
     const $form = $('.api-tester-form');
     
-    // Check content-type on load and changes
-    function maybeAllowNesting() {
+    // Validate and update body field based on content type
+    function validateBodyField() {
         const $contentType = $('select[name="content_type"]');
         const $bodyInputs = $('.array-inputs[data-field="body"]');
+        const contentType = $contentType.val();
         
-        if ($contentType.length && $contentType.val() === 'application/json') {
+        // Force object mode for form-urlencoded
+        if (contentType === 'application/x-www-form-urlencoded') {
+            const $rootType = $bodyInputs.closest('.form-field').find('.array-root-type');
+            if ($rootType.val() !== 'object') {
+                $rootType.val('object').trigger('change');
+            }
+        }
+        
+        // Handle nesting for JSON
+        if (contentType === 'application/json') {
             // Show nesting buttons
             $bodyInputs.find('.array-nested').show();
             
@@ -41,10 +51,10 @@ jQuery(document).ready(function($){
     }
     
     // Check on page load
-    maybeAllowNesting();
+    validateBodyField();
     
     // Check on change
-    $(document).on('change', 'select[name="content_type"]', maybeAllowNesting);
+    $(document).on('change', 'select[name="content_type"]', validateBodyField);
 
     const $runButton = $('.api-tester-run');
     const $saveButton = $('.api-tester-save');
@@ -336,7 +346,7 @@ jQuery(document).ready(function($){
         }
         
         // Update nesting buttons visibility
-        maybeAllowNesting();
+        validateBodyField();
         
         $container.find('.array-buttons').before($row);
         updateArrayField($container);
