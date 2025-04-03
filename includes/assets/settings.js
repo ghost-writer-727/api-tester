@@ -5,12 +5,38 @@ jQuery(document).ready(function($){
     // Check content-type on load and changes
     function maybeAllowNesting() {
         const $contentType = $('select[name="content_type"]');
+        const $bodyInputs = $('.array-inputs[data-field="body"]');
+        
         if ($contentType.length && $contentType.val() === 'application/json') {
-            const $bodyInputs = $('.array-inputs[data-field="body"]');
+            // Show nesting buttons
             $bodyInputs.find('.array-nested').show();
+            
+            // Restore any saved nested containers
+            $bodyInputs.find('> .array-row').each(function() {
+                const $row = $(this);
+                const savedNested = $row.data('saved-nested');
+                if (savedNested) {
+                    $row.after(savedNested);
+                    $row.removeData('saved-nested');
+                }
+            });
+            // Update JSON after restoring nested content
+            updateArrayField($bodyInputs);
         } else {
-            const $bodyInputs = $('.array-inputs[data-field="body"]');
+            // Hide nesting buttons
             $bodyInputs.find('.array-nested').hide();
+            
+            // Store and remove any nested containers
+            $bodyInputs.find('> .array-row').each(function() {
+                const $row = $(this);
+                const $nested = $row.next('.nested-array-container');
+                if ($nested.length) {
+                    $row.data('saved-nested', $nested);
+                    $nested.detach();
+                }
+            });
+            // Update JSON after removing nested content
+            updateArrayField($bodyInputs);
         }
     }
     
