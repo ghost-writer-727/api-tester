@@ -208,8 +208,8 @@ class Settings{
                 $html .= '<button type="button" class="button array-add">Add Item</button>';
                 $html .= '<button type="button" class="button button-secondary array-preview">Preview</button>';
                 $html .= '</span>';
-                $html .= '<input id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '" class="array-text-value">';
                 $html .= '</span>';
+                $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '" class="array-text-value">';
 //                $html .= '</span>';
             } elseif (is_numeric($value)) {
                 $html .= $label_end;

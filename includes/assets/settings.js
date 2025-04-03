@@ -6,18 +6,54 @@ jQuery(document).ready(function($){
     function validateBodyField() {
         const $contentType = $('select[name="content_type"]');
         const $bodyInputs = $('.array-inputs[data-field="body"]');
+        const $textInput = $('input[name="body"]');
         const contentType = $contentType.val();
+        const $rootType = $bodyInputs.closest('.form-field').find('.array-root-type');
         
-        // Force object mode for form-urlencoded
-        if (contentType === 'application/x-www-form-urlencoded') {
-            const $rootType = $bodyInputs.closest('.form-field').find('.array-root-type');
-            if ($rootType.val() !== 'object') {
-                $rootType.val('object').trigger('change');
+        if (contentType === 'text/plain') {
+            // Store current array value before switching to text
+            if (!$bodyInputs.data('saved-array-value')) {
+                $bodyInputs.data('saved-array-value', $textInput.val());
             }
-        }
-        
-        // Handle nesting for JSON
-        if (contentType === 'application/json') {
+            // Store current text value if switching from text to something else
+            if ($bodyInputs.is(':hidden') && $textInput.is(':visible')) {
+                $bodyInputs.data('saved-text-value', $textInput.val());
+            }
+            // Show text input, hide array inputs
+            $bodyInputs.hide();
+            $textInput.show();
+            // Restore previous text value if it exists
+            const savedText = $bodyInputs.data('saved-text-value');
+            if (savedText !== undefined) {
+                $textInput.val(savedText);
+            }
+            // Hide the root type selector
+            $rootType.hide();
+        } else {
+            // Show array inputs, hide text input
+            $bodyInputs.show();
+            $textInput.hide();
+            // Show the root type selector
+            $rootType.show();
+            // Restore previous array value if it exists
+            const savedArrayValue = $bodyInputs.data('saved-array-value');
+            if (savedArrayValue !== undefined) {
+                $textInput.val(savedArrayValue);
+            }
+            
+            // Force object mode for form-urlencoded
+            if (contentType === 'application/x-www-form-urlencoded') {
+                const $rootType = $bodyInputs.closest('.form-field').find('.array-root-type');
+                if ($rootType.val() !== 'object') {
+                    $rootType.val('object').trigger('change');
+                }
+                $rootType.prop('disabled', true);
+            } else {
+                $rootType.prop('disabled', false);
+            }
+            
+            // Handle nesting for JSON
+            if (contentType === 'application/json') {
             // Show nesting buttons
             $bodyInputs.find('.array-nested').show();
             
@@ -47,6 +83,7 @@ jQuery(document).ready(function($){
             });
             // Update JSON after removing nested content
             updateArrayField($bodyInputs);
+        }
         }
     }
     
