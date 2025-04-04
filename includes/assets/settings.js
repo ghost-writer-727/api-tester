@@ -13,7 +13,20 @@ jQuery(document).ready(function($){
         "artFiles": ""
     }
     */
-
+       
+    console.log(api_tester.presets.preset_1742936581961.body); 
+    /*
+    prints the following js object (not a string): 
+    {
+    "1": {
+        "3": [
+            "6"
+        ]
+    },
+    "7": "8"
+    }
+    
+    */
     // Initialize form elements
     const $form = $('.api-tester-form');
     
