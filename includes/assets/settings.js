@@ -1,4 +1,19 @@
 jQuery(document).ready(function($){
+    console.log(api_tester.presets.preset_1742936581961.body); 
+    /*
+    prints the following js object (not a string): 
+    {
+        "poNumber": "",
+        "inhandDate": "",
+        "externalOrderNumber": "",
+        "shipping": "jsonObject",
+        "lineItems": "jsonObject",
+        "orderNotes": "",
+        "graphicApprovals": "jsonObject",
+        "artFiles": ""
+    }
+    */
+
     // Initialize form elements
     const $form = $('.api-tester-form');
     
@@ -133,7 +148,7 @@ jQuery(document).ready(function($){
                 <input type="text" class="array-value" placeholder="Value">
                 <select class="array-type-toggle" style="display:none">
                     <option value="array">Array</option>
-                    <option value="object">Object</option>
+                    <option value="object" selected>Object</option>
                 </select>
                 <button type="button" class="button-link array-nested" title="Add child item">
                     <span class="dashicons dashicons-plus"></span>
@@ -614,6 +629,7 @@ jQuery(document).ready(function($){
     // Update the content fo the array field preview
     function updateArrayFieldPreview(content){
         const $preview = $('#array_field_preview');
+        console.log( content );
         const parsedValue = JSON.parse(content);
         const formattedValue = JSON.stringify(parsedValue, null, 4);
         $preview.find('pre').text(formattedValue);
@@ -622,7 +638,7 @@ jQuery(document).ready(function($){
     // Handle click of the Preview button
     $(document).on('click', '.array-preview', function(e) {
         e.preventDefault();
-        const $input = $(this).closest('.array-inputs').find('.array-text-value');
+        const $input = $(this).closest('.array-inputs').next('.array-text-value');
         updateArrayFieldPreview($input.val())
         displayArrayFieldPreview( false );
     });
@@ -922,9 +938,9 @@ jQuery(document).ready(function($){
         });
         
         // Clear all array fields
-        $('.array-inputs').each(function() {
+        $form.find('input.array-text-value').val('');
+        $form.find('.array-inputs').each(function() {
             $(this).find('.array-row, .nested-array-container').remove();
-            $(this).find('input[type="hidden"]').val('{}');
         });
 
         // Handle unlimited size first to ensure proper range state
@@ -972,13 +988,16 @@ jQuery(document).ready(function($){
                         // If it's not JSON, unescape the string
                         value = value.replace(/\\/g, '');
                     }
+                } else if (typeof value === 'object') {
+                    // convert to a string for the hidden text field
+                    value = JSON.stringify(value, null, 2);
                 }
                 $field.val(value);
             }
         });
 
         // Then handle array fields
-        $('.array-inputs').each(function() {
+        $form.find('.array-inputs').each(function() {
             const fieldName = $(this).data('field');
             const key = 'api_tester_' + fieldName;
             $(this).find('.array-row').remove();
