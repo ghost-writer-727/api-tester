@@ -1,5 +1,5 @@
 jQuery(document).ready(function($){
-    console.log(api_tester.presets.preset_1742936581961.body); 
+    console.log(api_tester.presets.preset_1743784043481.body); 
     /*
     prints the following js object (not a string): 
     {
@@ -1047,7 +1047,7 @@ jQuery(document).ready(function($){
                                 
                                 $row.find('.array-key').val(key);
                                 $row.find('.array-value').val(val);
-                                $(this).find('.array-add').before($row);
+                                $(this).find('.array-buttons').before($row);
                             }
                         });
                     }
