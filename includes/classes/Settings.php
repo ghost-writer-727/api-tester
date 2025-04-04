@@ -118,11 +118,10 @@ class Settings{
             // Get tooltip text based on field name
             $tooltip = $this->get_field_tooltip($name);
             $html .= '<p class="form-field ' . esc_attr($field_id) . '_field">';
-            $label_start = '<label for="' . esc_attr($field_id) . '">' . 
-                     esc_html(ucfirst(str_replace('_', ' ', $name)));
-            $label_end = ($tooltip ? ' <span class="woocommerce-help-tip" data-tip="' . esc_attr($tooltip) . '"></span>' : '') . 
-                     '</label>';
+            $label_start = '<label for="' . esc_attr($field_id) . '">' . esc_html(ucfirst(str_replace('_', ' ', $name)));
             $html .= $label_start;
+
+            $label_end = ($tooltip ? ' <span class="woocommerce-help-tip" data-tip="' . esc_attr($tooltip) . '"></span>' : '') . '</label>';
             
             // Handle different types of values
             if ($name === 'method') {
@@ -207,10 +206,9 @@ class Settings{
                 $html .= '<span class="array-buttons">';
                 $html .= '<button type="button" class="button array-add">Add Item</button>';
                 $html .= '<button type="button" class="button button-secondary array-preview">Preview</button>';
-                $html .= '</span>';
-                $html .= '</span>';
+                $html .= '</span>'; // End array-buttons
+                $html .= '</span>'; // End array-inputs
                 $html .= '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . esc_attr(json_encode($value)) . '" class="array-text-value">';
-//                $html .= '</span>';
             } elseif (is_numeric($value)) {
                 $html .= $label_end;
                 $html .= '<input type="number" id="' . esc_attr($field_id) . '" name="' . esc_attr($name) . '" value="' . 
