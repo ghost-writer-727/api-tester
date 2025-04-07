@@ -1,6 +1,8 @@
 <?php namespace API_Tester;
 defined( 'ABSPATH' ) || exit;
 
+use Exception;
+
 class Operator{
     public $title = '';
     public $description = '';
@@ -61,11 +63,11 @@ class Operator{
             'blocking',
             'authorization',
             'encoding_type',
-            'content_type',
             'cache_control',
             'accept',
             'headers',
             'cookies',
+            'content_type',
             'body',
             'compress',
             'decompress',
@@ -198,7 +200,10 @@ class Operator{
     public function request() {
         $url = $this->endpoint . $this->route;
         $args = $this->get_args(true);
-        
+        dap( $_POST['body'] );
+        dap( $args['body'] );
+        throw new Exception( 'Stop for temp debugging' );
+
         $this->response = wp_remote_request($url, $args);
 
         return $this->process_response();
@@ -308,9 +313,14 @@ class Operator{
     private function prepare_body(){
         $body = null;
         if( $this->body ){
+            // If body is a JSON string, decode it first
+            if(is_string($this->body) && $decoded = json_decode($this->body, true)) {
+                $this->body = $decoded;
+            }
+            
             switch( $this->content_type ){
                 case 'application/json':
-                    $body = json_encode( $this->body );
+                    $body = json_encode($this->body);
                     break;
                 case 'application/x-www-form-urlencoded': // wp_remote_request() will url-encode this for us
                     $body = $this->body;
