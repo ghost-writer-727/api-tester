@@ -1289,7 +1289,7 @@ jQuery(document).ready(function($){
                 }
             } else {
                 item.html('<strong>' + key + '</strong>: ' + String(value));
-                addCopyButton(item, String(value));
+                // addCopyButton(item, String(value));
             }
             list.append(item);
         });
@@ -1308,7 +1308,7 @@ jQuery(document).ready(function($){
                 }
             } else {
                 item.html(String(value));
-                addCopyButton(item, String(value));
+                // addCopyButton(item, String(value));
             }
             list.append(item);
         });
