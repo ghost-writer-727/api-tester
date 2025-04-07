@@ -32,13 +32,14 @@ jQuery(document).ready(function($){
     const $form = $('.api-tester-form');
     
     // Validate and update body field based on content type
-    function validateBodyField() {
+    function validateBodyField(){
+        const $method = $('select[name="method"]');
         const $contentType = $('select[name="content_type"]');
         const $bodyInputs = $('.array-inputs[data-field="body"]');
         const $textInput = $('input[name="body"]');
         const contentType = $contentType.val();
         const $rootType = $bodyInputs.closest('.form-field').find('.array-root-type');
-        
+
         if (contentType === 'text/plain') {
             // Store current array value before switching to text
             if (!$bodyInputs.data('saved-array-value')) {
@@ -1031,7 +1032,7 @@ jQuery(document).ready(function($){
                     $field.find('.array-text-value').val(arrayData);
                     console.log( 'ERROR: This isn\'t reading in the text value? I suspect the save process.');
                     return;
-                } 
+                }
                 // Handle object/array data for array fields
                 else {
                     arrayData = convertJson(rowData, true);

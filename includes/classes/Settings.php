@@ -377,14 +377,11 @@ class Settings{
                 continue;
             }
             
-            // Handle array properties
+            // Handle array properties, which can be a text string, json object string or json array string
             if( $this->default_operator->get_property_type( $property_name ) === 'array' ){
-                $array_data = Operator::maybe_json_decode( stripslashes($preset_data[$property_name]), true );
-                if( is_array( $array_data ) ){
-                    $preset_data[$property_name] = $array_data;
-                } else {
-                    $preset_data[$property_name] = [];
-                }
+                //$array_data = Operator::maybe_json_decode( stripslashes($preset_data[$property_name]), true );
+                $array_data = stripslashes($preset_data[$property_name]);
+                $preset_data[$property_name] = $array_data;
             }
         }
 

@@ -120,10 +120,20 @@ class Operator{
                         }
                         break;
                     case 'array':
-                        $value = self::maybe_json_decode( $value );
-                        if( is_array( $value ) ){
-                            $this->$key = array_map( 'sanitize_text_field', $value );
+                        if( is_string( $value ) ){
+                            if( $key == 'body' ){
+                                // No need to convert json objects to arrays in the body. We'll do that when preparing for requests if needed.
+                                $value = stripslashes( $value );
+                            } else {
+                                // Check if it's a json object that we need to convert to an array
+                                $value = self::maybe_json_decode( $value );
+                            }
                         }
+
+                        if( is_array( $value ) ){
+                            $value = array_map( 'sanitize_text_field', $value );
+                        }
+                        $this->$key = $value;
                         break;
                 }
 
@@ -200,10 +210,6 @@ class Operator{
     public function request() {
         $url = $this->endpoint . $this->route;
         $args = $this->get_args(true);
-        dap( $_POST['body'] );
-        dap( $args['body'] );
-        throw new Exception( 'Stop for temp debugging' );
-
         $this->response = wp_remote_request($url, $args);
 
         return $this->process_response();
@@ -231,12 +237,17 @@ class Operator{
     }
 
     public static function maybe_json_decode( $var, $assoc = true ){
-        if( is_string( $var ) && strpos( $var, '{' ) !== false && strpos( $var, '}' ) !== false && $array = json_decode( stripslashes($var), $assoc ) ){
-            if( $array !== null ){
-                return $array;
-            }
+        if( $array = self::is_json( $var ) ){
+            return $array;
         }
         return $var == '{}' ? [] : $var;
+    }
+
+    public static function is_json( $var ){
+        if( is_string( $var ) && strpos( $var, '{' ) !== false && strpos( $var, '}' ) !== false && $array = json_decode( stripslashes($var), true ) ){
+            return $array;
+        }
+        return null;
     }
 
     public function get_response() {
@@ -313,17 +324,12 @@ class Operator{
     private function prepare_body(){
         $body = null;
         if( $this->body ){
-            // If body is a JSON string, decode it first
-            if(is_string($this->body) && $decoded = json_decode($this->body, true)) {
-                $this->body = $decoded;
-            }
-            
             switch( $this->content_type ){
                 case 'application/json':
-                    $body = json_encode($this->body);
+                    $body = is_array( $this->body ) ? json_encode( $this->body ) : $this->body;
                     break;
-                case 'application/x-www-form-urlencoded': // wp_remote_request() will url-encode this for us
-                    $body = $this->body;
+                case 'application/x-www-form-urlencoded': // wp_remote_request() will url-encode this for us as long as it's an array
+                    $body = self::maybe_json_decode( $this->body );
                     break;
                 case 'text/plain':
                 default:
