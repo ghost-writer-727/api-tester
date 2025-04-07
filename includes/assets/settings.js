@@ -1,5 +1,6 @@
 jQuery(document).ready(function($){
-    console.log(api_tester.presets.preset_1743784043481.body); 
+    console.log(api_tester.presets);
+//    console.log(api_tester.presets.preset_1743784043481.body); 
     /*
     prints the following js object (not a string): 
     {
@@ -14,7 +15,7 @@ jQuery(document).ready(function($){
     }
     */
        
-    console.log(api_tester.presets.preset_1742936581961.body); 
+//    console.log(api_tester.presets.preset_1742936581961.body); 
     /*
     prints the following js object (not a string): 
     {
@@ -82,36 +83,36 @@ jQuery(document).ready(function($){
             
             // Handle nesting for JSON
             if (contentType === 'application/json') {
-            // Show nesting buttons
-            $bodyInputs.find('.array-nested').show();
-            
-            // Restore any saved nested containers
-            $bodyInputs.find('> .array-row').each(function() {
-                const $row = $(this);
-                const savedNested = $row.data('saved-nested');
-                if (savedNested) {
-                    $row.after(savedNested);
-                    $row.removeData('saved-nested');
-                }
-            });
-            // Update JSON after restoring nested content
-            updateArrayField($bodyInputs);
-        } else {
-            // Hide nesting buttons
-            $bodyInputs.find('.array-nested').hide();
-            
-            // Store and remove any nested containers
-            $bodyInputs.find('> .array-row').each(function() {
-                const $row = $(this);
-                const $nested = $row.next('.nested-array-container');
-                if ($nested.length) {
-                    $row.data('saved-nested', $nested);
-                    $nested.detach();
-                }
-            });
-            // Update JSON after removing nested content
-            updateArrayField($bodyInputs);
-        }
+                // Show nesting buttons
+                $bodyInputs.find('.array-nested').show();
+                
+                // Restore any saved nested containers
+                $bodyInputs.find('> .array-row').each(function() {
+                    const $row = $(this);
+                    const savedNested = $row.data('saved-nested');
+                    if (savedNested) {
+                        $row.after(savedNested);
+                        $row.removeData('saved-nested');
+                    }
+                });
+                // Update JSON after restoring nested content
+                updateArrayField($bodyInputs);
+            } else {
+                // Hide nesting buttons
+                $bodyInputs.find('.array-nested').hide();
+                
+                // Store and remove any nested containers
+                $bodyInputs.find('> .array-row').each(function() {
+                    const $row = $(this);
+                    const $nested = $row.next('.nested-array-container');
+                    if ($nested.length) {
+                        $row.data('saved-nested', $nested);
+                        $nested.detach();
+                    }
+                });
+                // Update JSON after removing nested content
+                updateArrayField($bodyInputs);
+            }
         }
     }
     
@@ -458,26 +459,28 @@ jQuery(document).ready(function($){
     '</style>').appendTo('head');
 
     // Handle nested array button click
-    $(document).on('click', '.array-nested', function(e) {
-        e.preventDefault();
-        const $row = $(this).closest('.array-row');
-        let $nestedContainer = $row.next('.nested-array-container');
-        const $container = $row.closest('.array-inputs');
+    $(document).on('click', '.array-nested', createNestedRow);
+    
+    function createNestedRow(e = null, $_parentRow = null) {
+        if(e) e.preventDefault();
+        const $parentRow = $_parentRow || $(this).closest('.array-row');
+        let $nestedContainer = $parentRow.next('.nested-array-container');
+        const $container = $parentRow.closest('.array-inputs');
         
         if (!$nestedContainer.length) {
             // Create new container if it doesn't exist
             $nestedContainer = $('<span class="nested-array-container"></span>');
-            $row.after($nestedContainer);
-            $row.addClass('has-children');
+            $parentRow.after($nestedContainer);
+            $parentRow.addClass('has-children');
             
             // Show type toggle and hide value input
-            $row.find('.array-value').hide();
-            $row.find('.array-type-toggle').show();
+            $parentRow.find('.array-value').hide();
+            $parentRow.find('.array-type-toggle').show();
         }
 
         // Add new row at the end of the container
         const $newRow = createArrayRow(true);
-        const type = $row.find('.array-type-toggle').val();
+        const type = $parentRow.find('.array-type-toggle').val();
         
         // Hide key input if parent is array type
         if (type === 'array') {
@@ -486,8 +489,11 @@ jQuery(document).ready(function($){
         
         $nestedContainer.append($newRow);
         updateArrayField($container);
-    });
-    
+
+        // Return the new row as jQuery object
+        return $newRow;
+    }
+
     // Handle array/object type toggle for nested items
     $(document).on('change', '.array-type-toggle', function() {
         const $row = $(this).closest('.array-row');
@@ -896,6 +902,7 @@ jQuery(document).ready(function($){
 
     // Reset array inputs to initial state
     function resetArrayInputs() {
+        $('#array_field_preview').hide();
         $('.array-inputs').each(function() {
             // Remove all array rows, nested containers, and their contents
             $(this).find('.array-row, .nested-array-container').remove();
@@ -933,6 +940,7 @@ jQuery(document).ready(function($){
             resetArrayInputs();
             return;
         }
+        
         
         setFormLoading(true, $(this));
         populateResponse();
@@ -989,86 +997,14 @@ jQuery(document).ready(function($){
                 // For select elements, we need to set the value and trigger change
                 $field.val(value).trigger('change');
             } else {
-                // Try to unescape string values for text fields
-                if (typeof value === 'string') {
-                    try {
-                        // First try to parse as JSON in case it's a stringified object/array
-                        const parsed = JSON.parse(value);
-                        if (typeof parsed === 'object') {
-                            value = JSON.stringify(parsed, null, 2);
-                        }
-                    } catch (e) {
-                        // If it's not JSON, unescape the string
-                        value = value.replace(/\\/g, '');
-                    }
-                } else if (typeof value === 'object') {
-                    // convert to a string for the hidden text field
-                    value = JSON.stringify(value, null, 2);
-                }
+                value = convertJson(value, false);
                 $field.val(value);
             }
         });
 
         // Then handle array fields
         $form.find('.array-inputs').each(function() {
-            const fieldName = $(this).data('field');
-            const key = 'api_tester_' + fieldName;
-            $(this).find('.array-row').remove();
-
-            if (data[fieldName]) {
-                try {
-                    let arrayData;
-                    if (typeof data[fieldName] === 'string') {
-                        // Handle potential double-encoded JSON
-                        try {
-                            arrayData = JSON.parse(data[fieldName]);
-                        } catch (e1) {
-                            try {
-                                arrayData = JSON.parse(data[fieldName].replace(/\\/g, ''));
-                            } catch (e2) {
-                                arrayData = {};
-                            }
-                        }
-                    } else {
-                        arrayData = data[fieldName];
-                    }
-
-                    if (arrayData && typeof arrayData === 'object') {
-                        Object.entries(arrayData).forEach(([k, v]) => {
-                            if (k && k.trim()) {
-                                const $row = createArrayRow();
-                                // Unescape array key and value if they're strings
-                                let key = k.trim();
-                                let val = v || '';
-                                
-                                if (typeof key === 'string') {
-                                    key = key.replace(/\\/g, '');
-                                }
-                                
-                                if (typeof val === 'string') {
-                                    try {
-                                        // Try to parse as JSON first
-                                        const parsed = JSON.parse(val);
-                                        if (typeof parsed === 'object') {
-                                            val = JSON.stringify(parsed, null, 2);
-                                        }
-                                    } catch (e) {
-                                        // If not JSON, just unescape the string
-                                        val = val.replace(/\\/g, '');
-                                    }
-                                }
-                                
-                                $row.find('.array-key').val(key);
-                                $row.find('.array-value').val(val);
-                                $(this).find('.array-buttons').before($row);
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.error('Error handling array data:', e);
-                }
-            }
-            updateArrayField($(this));
+            processArrayField($(this), data);
         });
 
         // Handle stream field last
@@ -1077,6 +1013,110 @@ jQuery(document).ready(function($){
         $form.attr('data-preset-id', presetId);
         update_active_form_visuals();
         setFormLoading(false);        
+    }
+
+// DEV: Working on reading in existing array data. It's only been showing [object Object] for the parent value of nested arrays. Gotta fix that.
+    function processArrayField($field, data){
+        const fieldName = $field.data('field');
+        const key = 'api_tester_' + fieldName;
+        $field.find('.array-row').remove();
+        const rowData = data[fieldName];
+
+        if (rowData) {
+            try {
+                let arrayData;
+                // Change body fields that should be text to regular inputs
+                if( fieldName === 'body' && data['content_type'] === 'text/plain' ){
+                    arrayData = convertJson(rowData, false);
+                    $field.find('.array-text-value').val(arrayData);
+                    console.log( 'ERROR: This isn\'t reading in the text value? I suspect the save process.');
+                    return;
+                } 
+                // Handle object/array data for array fields
+                else {
+                    arrayData = convertJson(rowData, true);
+                    Object.entries(arrayData).forEach(([k, v]) => {
+                        processArrayRow($field, k, v);
+                    });
+                }
+            } catch (e) {
+                console.error('Error handling array data:', e);
+            }
+        }
+        updateArrayField($field);
+    }
+
+    function processArrayRow($field, k, v, $parentRow = null){
+        let $row;
+        if( $parentRow ){
+            $row = createNestedRow(null, $parentRow);
+        }else{
+            $row = createArrayRow();
+            $field.find('.array-buttons').before($row);
+        }
+
+        if (k && k.trim()) {
+            // Unescape array key and value if they're strings
+            let key = k.trim();
+            if (typeof key === 'string') {
+                key = key.replace(/\\/g, '');
+            }            
+            $row.find('.array-key').val(key);
+
+            let val = v || '';
+            if( typeof val === 'string' ){
+                val = val.replace(/\\/g, '');
+                $row.find('.array-value').val(val);
+            } else {
+                // Determine if the value is an array or an object
+                const childType = Array.isArray(val) ? 'array' : 'object';
+                $row.find('> .array-type-toggle').val(childType);
+                Object.entries(val).forEach(([k, v]) => {
+                    processArrayRow($field, k, v, $row);
+                });
+            }
+        }
+    }
+
+    /**
+     * Toggle a string to JSON or vice versa, unless toJson is explicitly set
+     * 
+     * @param {string|object} data - The data to convert
+     * @param {boolean|null} toJson - Whether to convert to JSON
+     * @returns {string|object} - The converted data
+     */
+    function convertJson(data, toJson = null){
+        if( toJson === null ){
+            toJson = typeof data === 'string';
+        }
+        if( toJson ){
+            if (typeof data === 'string') {
+                // Handle potential double-encoded JSON
+                try {
+                    return JSON.parse(data);
+                } catch (e1) {
+                    try {
+                        return JSON.parse(data.replace(/\\/g, ''));
+                    } catch (e2) {
+                        // It's just a string, return it in an array
+                        return [data];
+                    }
+                }
+            }
+            // It's already a json object, return it
+            return data;
+        } else {
+            if (typeof data === 'object') {
+                // Convert the object to a string
+                return JSON.stringify(data, null, 2);
+            }
+            // If not JSON, just unescape the string
+            return data.replace(/\\/g, '');
+        }
+    }
+
+    function processArrayValue( value ){
+        return value;
     }
 
     function populateResponse(responseTimestamp = '', autoSelectFirst = true){
