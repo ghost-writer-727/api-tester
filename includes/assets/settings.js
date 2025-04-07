@@ -1206,12 +1206,12 @@ jQuery(document).ready(function($){
         if( response ){
             // populate divs
             $responseHeader.html('Status: ' + response.status_code);
-            $responseBody.html(getObjectHtml(response.body, 'Response Body'));
-            $responseArgs.html(getObjectHtml(response.args, 'Request Args'));
+            $responseBody.html(getResponseTableHtml(response.body, 'Response Body'));
+            $responseArgs.html(getResponseTableHtml(response.args, 'Request Args'));
         }
     }
 
-    function getObjectHtml(obj, heading = null){
+    function getResponseTableHtml(obj, heading = null){
         // Try parsing if it's a JSON string
         if (typeof obj === 'string') {
             try {
@@ -1254,7 +1254,13 @@ jQuery(document).ready(function($){
                 addCopyButton(valueCell);
             } else if (typeof value === 'object') {
                 // Recursively handle nested objects
-                valueCell.append(getObjectHtml(value));
+                if( objectIsShallow(value) ){
+                    valueCell.append(getResponseTableHtml(value));
+                } else if( Array.isArray(value) ){
+                    valueCell.append(getArrayHtml(value));
+                } else {
+                    valueCell.append(getObjectHtml(value));
+                }
             } else {
                 valueCell.text(String(value));
                 addCopyButton(valueCell);
@@ -1266,10 +1272,53 @@ jQuery(document).ready(function($){
         return table;
     }
 
-    function addCopyButton(element) {
+    function objectIsShallow(object){
+        return Object.values(object).every(value => typeof value !== 'object' );
+    }
+
+    function getObjectHtml(values) {
+        const list = $('<ul></ul>');
+        Object.entries(values).forEach(([key, value]) => {
+            const item = $('<li></li>');
+            if( typeof value === 'object' ){
+                item.html('<strong>' + key + '</strong>: ');
+                if( Array.isArray(value) ){
+                    item.append(getArrayHtml(value));
+                } else {
+                    item.append(getObjectHtml(value));
+                }
+            } else {
+                item.html('<strong>' + key + '</strong>: ' + String(value));
+                addCopyButton(item, String(value));
+            }
+            list.append(item);
+        });
+        return list;
+    }
+
+    function getArrayHtml(values){
+        const list = $('<ul></ul>');
+        values.forEach(value => {
+            const item = $('<li></li>');
+            if( typeof value === 'object' ){
+                if( Array.isArray(value) ){
+                    item.append(getArrayHtml(value));
+                } else {
+                    item.append(getObjectHtml(value));
+                }
+            } else {
+                item.html(String(value));
+                addCopyButton(item, String(value));
+            }
+            list.append(item);
+        });
+        return list;
+    }
+
+    function addCopyButton(element, copyText = null) {
         const copyIcon = $('<div class="copy-icon" title="Copy to clipboard"></div>');
         copyIcon.on('click', function() {
-            const text = element.text();
+            const text = copyText || element.text();
             navigator.clipboard.writeText(text).then(() => {
                 copyIcon.addClass('copied');
                 setTimeout(() => {
