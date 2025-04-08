@@ -423,15 +423,23 @@ jQuery(document).ready(function($){
         e.preventDefault();
         const $row = $(this).closest('.array-row');
         const $container = $row.closest('.array-inputs');
-        const $nestedContainer = $row.closest('.nested-array-container');
-        const $parentRow = $nestedContainer.prev('.array-row');
-        const $addSibling = $nestedContainer.next('.array-add-sibling');
         
-        // Remove the row
+        // Find and remove any nested containers that belong to this row
+        const $childContainer = $row.next('.nested-array-container');
+        if ($childContainer.length) {
+            const $addSibling = $childContainer.next('.array-add-sibling');
+            $childContainer.remove();
+            $addSibling.remove();
+        }
+        
+        // Remove the row itself
         $row.remove();
         
-        // If this was the last row in a nested container, remove the container and sibling button
+        // If this row was inside a nested container, check if it was the last one
+        const $nestedContainer = $row.closest('.nested-array-container');
         if ($nestedContainer.length && $nestedContainer.find('.array-row').length === 0) {
+            const $parentRow = $nestedContainer.prev('.array-row');
+            const $addSibling = $nestedContainer.next('.array-add-sibling');
             $nestedContainer.remove();
             $addSibling.remove();
             if ($parentRow.length) {
