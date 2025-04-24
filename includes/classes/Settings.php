@@ -543,7 +543,7 @@ class Settings{
         array_unshift($this->presets[$preset_id]['responses'], $response);
         
         // remove any responses over the max
-        $max_responses = 10;
+        $max_responses = 5;
         while( count($this->presets[$preset_id]['responses']) > $max_responses ){
             array_pop($this->presets[$preset_id]['responses']);
         }
