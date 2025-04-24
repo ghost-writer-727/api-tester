@@ -211,6 +211,7 @@ class Operator{
         $url = $this->endpoint . $this->route;
         $args = $this->get_args(true);
         $this->response = wp_remote_request($url, $args);
+        $this->log_request( $url, $args, $this->response );
 
         return $this->process_response();
     }
@@ -340,5 +341,44 @@ class Operator{
             }
         }
         return $body;
+    }
+
+    private function log_request($url, $args, $response){
+        // Create a log folder under uploads/api-tester
+        $log_dir = wp_upload_dir()['basedir'] . '/api-tester';
+        if( ! file_exists( $log_dir ) ){
+            mkdir( $log_dir, 0755, true );
+        }
+        
+        // Create a log file
+        $log_file = $log_dir . '/' . date( 'Y-m-d' ) . '.log';
+        
+        // Clean up the args and response
+        $args = $this->format_array_for_logs( $args );
+        $response = $this->format_array_for_logs( $response );
+
+        // Write the request to the log file
+        $datestamp = date( 'Y-m-d H:i:s' );
+        $log_entry = "---------------------------[$datestamp]---------------------------\nURL: $url \nARGS: " . print_r( $args, true ) . "\n\nRESPONSE: " . print_r( $response, true ) . "\n\n";
+        
+        // Write the log entry to the file
+        file_put_contents( $log_file, $log_entry, FILE_APPEND );
+    }
+
+    private function format_array_for_logs($array, $level = 1){
+        if( is_array( $array ) ){
+            foreach($array as $key => &$value){
+                if( is_array( $value ) ){
+                    $value = $this->format_array_for_logs( $value, $level + 1 );
+                } else if( self::is_json( $value ) ){
+                    $value = $this->prettify_json( $value );
+                }
+            }
+        }
+        return $array;
+    }
+
+    private function prettify_json($json){
+        return json_encode( json_decode( $json ), JSON_PRETTY_PRINT );
     }
 }
