@@ -3,7 +3,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Plugin Name: API Tester
  * Description: A plugin to test APIs calls.
- * Version: 0.1.2
+ * Version: 0.1.3
  * Author: Ghostwriter
  */
 
